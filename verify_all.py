@@ -148,4 +148,81 @@ for tok in forbidden_tokens:
     assert tok not in html_text, f"Forbidden token '{tok}' found in HTML"
 print("Test 14 - Anonymity check: OK")
 
-print("\n>>> TODAS AS VERIFICAÇÕES PASSARAM COM 100% DE SUCESSO! <<<")
+# Test 15: Quick Actions Bar (barra de 4 Ações Rápidas no topo sem emojis)
+quick_bar = soup.find("nav", class_="quick-actions-bar")
+assert quick_bar is not None, "Quick actions bar must exist"
+quick_links = quick_bar.find_all("a", class_="quick-action-btn")
+print(f"Test 15 - Quick actions buttons count: {len(quick_links)} (Esperado: 4)")
+assert len(quick_links) == 4, f"Expected 4 quick action buttons, got {len(quick_links)}"
+
+expected_anchors = [
+    ("#sec-cronograma", "Cronograma e Prazos do Edital"),
+    ("#sec-dicas", "Regras Formais do Anteprojeto"),
+    ("#sec-professores", "Docentes e Vagas da Linha 1"),
+    ("#sec-catalogo", "Catálogo de Defesas com Busca")
+]
+for i, (exp_href, exp_title) in enumerate(expected_anchors):
+    btn = quick_links[i]
+    assert btn["href"] == exp_href, f"Button {i+1} href must be {exp_href}, got {btn['href']}"
+    assert exp_title in btn.get_text(), f"Button {i+1} must contain '{exp_title}', got {btn.get_text()}"
+    # Verify no emojis
+    for ch in btn.get_text():
+        assert ord(ch) < 0x1F300 or ord(ch) > 0x1FAFF, f"Emoji detected in quick action button: {ch}"
+print("Test 15b - All 4 Quick Action buttons verified (exact anchors, titles, no emojis): OK")
+
+# Test 16: Section #sec-cronograma (Cronograma Oficial e 5 etapas)
+sec_crono = soup.find("section", id="sec-cronograma")
+assert sec_crono is not None, "Section #sec-cronograma must exist"
+crono_text = sec_crono.get_text()
+
+# Check critical deadlines and urgency alert
+assert "08/10 a 20/10/2026" in crono_text, "Inscrições 08/10 a 20/10/2026 must be present"
+assert "23h59" in crono_text, "Horário de encerramento 23h59 must be present"
+assert "PagTesouro" in crono_text, "Menção a PagTesouro must be present"
+assert "20h00" in crono_text or "20:00" in crono_text, "Horário limite taxa 20h00 must be present"
+assert "150,00" in crono_text or "150" in crono_text, "Taxa de R$ 150 must be present"
+assert "08/10 a 12/10/2026" in crono_text, "Isenção 08/10 a 12/10/2026 must be present"
+
+# Check the 5 stages and dates
+timeline_cards = sec_crono.find_all("div", class_="timeline-step-card")
+print(f"Test 16a - Timeline stage cards: {len(timeline_cards)} (Esperado: 5)")
+assert len(timeline_cards) == 5, f"Expected 5 timeline stage cards, got {len(timeline_cards)}"
+
+assert "23/11/2026" in crono_text, "Prova escrita 23/11/2026 must be present"
+assert "08/12 a 10/12/2026" in crono_text, "Arguição 08/12 a 10/12/2026 must be present"
+assert "Janeiro/2027" in crono_text or "janeiro/2027" in crono_text, "Análise do Lattes janeiro/2027 must be present"
+assert "11/02/2027" in crono_text, "Heteroidentificação 11/02/2027 must be present"
+assert "26/02/2027" in crono_text, "Resultado final 26/02/2027 must be present"
+
+# Check weights and formula
+assert "Peso 3 (0,3)" in crono_text, "Anteprojeto e Arguição peso 3 must be present"
+assert "Peso 2 (0,2)" in crono_text, "Prova escrita e Lattes peso 2 must be present"
+assert "MF = (AA × 0,3) + (PE × 0,2) + (AAP × 0,3) + (ACL × 0,2)" in crono_text, "Formula MF must be present"
+print("Test 16b - All dates, stages, weights and formula in #sec-cronograma verified: OK")
+
+# Test 17: Checklist de Conformidade in #sec-dicas
+sec_dicas = soup.find("section", id="sec-dicas")
+assert sec_dicas is not None, "Section #sec-dicas must exist"
+checklist = sec_dicas.find("div", class_="compliance-checklist-card")
+assert checklist is not None, "Compliance checklist card must exist in #sec-dicas"
+
+checklist_items = checklist.find_all("div", class_="checklist-item")
+print(f"Test 17a - Checklist items count: {len(checklist_items)} (Esperado: 8)")
+assert len(checklist_items) >= 6, f"Expected at least 6 checklist items, got {len(checklist_items)}"
+
+chk_text = checklist.get_text()
+assert "7 laudas" in chk_text.lower() or "7 lauda" in chk_text.lower(), "Checklist must specify 7 laudas"
+assert "anonimato" in chk_text.lower(), "Checklist must specify anonimato"
+assert "metadados" in chk_text.lower(), "Checklist must specify higienização de metadados"
+assert "2.664/2026" in chk_text or "2664" in chk_text, "Checklist must cite Portaria CNPq 2.664/2026"
+assert "linha 1" in chk_text.lower(), "Checklist must reference Linha 1 orientadores"
+assert "abnt" in chk_text.lower(), "Checklist must reference ABNT NBR 6023"
+print("Test 17b - Checklist items content and compliance criteria verified: OK")
+
+# Test 18: TOC contains anchor to #sec-cronograma
+toc_box = soup.find("nav", class_="toc-box")
+assert toc_box is not None, "TOC must exist"
+assert toc_box.find("a", href="#sec-cronograma") is not None, "TOC must link to #sec-cronograma"
+print("Test 18 - TOC links to #sec-cronograma: OK")
+
+print("\n>>> TODAS AS 18 VERIFICAÇÕES PASSARAM COM 100% DE SUCESSO! <<<")

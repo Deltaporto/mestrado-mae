@@ -299,6 +299,389 @@ out.append("""<!DOCTYPE html>
             margin-bottom: 0;
         }
 
+        /* Quick Actions Bar */
+        .quick-actions-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 34px;
+            padding: 16px;
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+        }
+
+        @media (max-width: 820px) {
+            .quick-actions-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-actions-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 14px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            color: var(--accent-navy);
+            text-decoration: none;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.35;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .quick-action-btn:hover {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+            text-decoration: none;
+        }
+
+        .quick-action-btn .btn-subtitle {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .quick-action-btn:hover .btn-subtitle {
+            color: #E2E8F0;
+        }
+
+        /* Cronograma e Prazos do Edital */
+        .cronograma-alert {
+            background: #FDF7F8;
+            border: 1px solid #E8C1C6;
+            border-left: 4px solid var(--accent-wine);
+            border-radius: 0 4px 4px 0;
+            padding: 18px 22px;
+            margin-bottom: 24px;
+        }
+
+        .cronograma-alert-title {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-wine);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cronograma-alert-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .cronograma-alert-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .cronograma-alert-item {
+            background: #FFFFFF;
+            border: 1px solid #E8D3D6;
+            border-radius: 4px;
+            padding: 12px 14px;
+        }
+
+        .cronograma-alert-label {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent-wine);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .cronograma-alert-val {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: block;
+            line-height: 1.35;
+        }
+
+        .cronograma-alert-detail {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.4;
+            display: block;
+        }
+
+        /* Timeline Flow */
+        .timeline-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .timeline-step-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 16px 20px;
+            display: grid;
+            grid-template-columns: 130px 1fr auto;
+            gap: 16px;
+            align-items: center;
+            transition: border-color 0.15s ease;
+        }
+
+        .timeline-step-card:hover {
+            border-color: var(--accent-navy);
+        }
+
+        @media (max-width: 680px) {
+            .timeline-step-card {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .step-badge-col {
+            text-align: center;
+        }
+
+        .step-number {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-wine);
+            display: block;
+        }
+
+        .step-date-badge {
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            display: block;
+            margin-top: 2px;
+            line-height: 1.25;
+        }
+
+        .step-info-col h4 {
+            font-family: var(--font-serif-title);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            margin-bottom: 4px;
+        }
+
+        .step-info-col p {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .step-meta-col {
+            text-align: right;
+            min-width: 140px;
+        }
+
+        @media (max-width: 680px) {
+            .step-meta-col {
+                text-align: left;
+            }
+        }
+
+        .step-weight-badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #EBF1F8;
+            color: var(--accent-navy);
+            border: 1px solid #CDDCED;
+        }
+
+        .step-nature-text {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .formula-card {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-left: 4px solid var(--accent-navy);
+            padding: 16px 20px;
+            border-radius: 0 4px 4px 0;
+            margin-top: 20px;
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+        }
+
+        .formula-card strong {
+            color: var(--accent-navy);
+        }
+
+        .formula-code {
+            display: block;
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--accent-navy);
+            margin: 8px 0;
+            font-weight: 600;
+        }
+
+        /* Compliance Checklist */
+        .compliance-checklist-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 24px;
+            margin: 28px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .compliance-checklist-header {
+            border-bottom: 2px solid var(--accent-wine);
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+
+        .compliance-checklist-header h3 {
+            font-family: var(--font-serif-title);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-wine);
+            margin-bottom: 4px;
+        }
+
+        .compliance-checklist-header p {
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .checklist-item {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .checklist-indicator {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            background: #FFFFFF;
+            border: 2px solid var(--accent-navy);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+            color: var(--accent-navy);
+        }
+
+        .checklist-body {
+            flex-grow: 1;
+        }
+
+        .checklist-item-title {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .checklist-tag {
+            font-family: var(--font-sans);
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #FDF3E7;
+            color: #92540D;
+            border: 1px solid #F5D3A6;
+        }
+
+        .checklist-tag.danger {
+            background: #FDF4F5;
+            color: var(--accent-wine);
+            border-color: #E8C1C6;
+        }
+
+        .checklist-tag.success {
+            background: #EEF8F1;
+            color: #1E6B39;
+            border-color: #C4E6CD;
+        }
+
+        .checklist-desc {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.5;
+            margin: 0;
+        }
+
         .toc-box {
             background: #FFFFFF;
             border: 1px solid var(--border-medium);
@@ -1232,7 +1615,7 @@ out.append("""<!DOCTYPE html>
                 padding: 0 !important;
                 max-width: 100% !important;
             }
-            .print-bar, .catalog-controls, .toc-box, #backToTopBtn, .skip-link, .faculty-actions {
+            .print-bar, .catalog-controls, .toc-box, #backToTopBtn, .skip-link, .faculty-actions, .quick-actions-bar {
                 display: none !important;
             }
             .policy-card, .faculty-card, .thesis-entry, .guideline-card {
@@ -1281,6 +1664,25 @@ out.append("""<!DOCTYPE html>
         </div>
     </header>
 
+    <nav class="quick-actions-bar" aria-label="Ações Rápidas">
+        <a href="#sec-cronograma" class="quick-action-btn">
+            <span>Cronograma e Prazos do Edital</span>
+            <span class="btn-subtitle">Inscrições e 5 Etapas</span>
+        </a>
+        <a href="#sec-dicas" class="quick-action-btn">
+            <span>Regras Formais do Anteprojeto</span>
+            <span class="btn-subtitle">Checklist e Vedações</span>
+        </a>
+        <a href="#sec-professores" class="quick-action-btn">
+            <span>Docentes e Vagas da Linha 1</span>
+            <span class="btn-subtitle">Perfis e Orientações</span>
+        </a>
+        <a href="#sec-catalogo" class="quick-action-btn">
+            <span>Catálogo de Defesas com Busca</span>
+            <span class="btn-subtitle">151 Trabalhos e PDFs</span>
+        </a>
+    </nav>
+
     <div class="intro-box">
         <h3>Apresentação e Escopo do Documento</h3>
         <p>
@@ -1291,15 +1693,224 @@ out.append("""<!DOCTYPE html>
         </p>
     </div>
 
+    <section class="section-block" id="sec-cronograma">
+        <div class="section-header">
+            <span class="section-tag">Edital PROPPG nº 30/2026</span>
+            <h2 class="section-title">Cronograma Oficial, Prazos e Etapas da Seleção (Ingresso 2027.1)</h2>
+        </div>
+        <p>
+            O processo seletivo do Programa de Pós-Graduação em Estado e Sociedade da UFSB para ingresso no primeiro semestre letivo de 2027 (Turma 2027.1) é regido pelo <strong>Edital PROPPG nº 30/2026</strong>. O certame distribui-se em 5 etapas sucessivas, com nota de corte mínima de <strong>7,0 (sete)</strong> em cada etapa de caráter eliminatório.
+        </p>
+
+        <div class="cronograma-alert" role="alert">
+            <div class="cronograma-alert-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Alerta de Urgência: Prazos Críticos de Inscrição e Pagamento
+            </div>
+            <p style="font-family: var(--font-sans); font-size: 13.5px; color: var(--text-main); margin-bottom: 8px;">
+                A submissão do anteprojeto e a inscrição são exclusivamente eletrônicas pelo portal público de processos seletivos do SIGAA UFSB. Fique atenta aos horários bancários e prazos improrrogáveis:
+            </p>
+            <div class="cronograma-alert-grid">
+                <div class="cronograma-alert-item">
+                    <span class="cronograma-alert-label">Inscrições no SIGAA</span>
+                    <span class="cronograma-alert-val">08/10 a 20/10/2026</span>
+                    <span class="cronograma-alert-detail">Encerramento improrrogável às 23h59 pelo sistema SIGAA.</span>
+                </div>
+                <div class="cronograma-alert-item">
+                    <span class="cronograma-alert-label">Taxa (R$ 150,00) via PagTesouro</span>
+                    <span class="cronograma-alert-val">Até 20/10 às 20h00</span>
+                    <span class="cronograma-alert-detail">Pagamento exclusivamente via PagTesouro (Boleto/Pix) até as 20h00.</span>
+                </div>
+                <div class="cronograma-alert-item">
+                    <span class="cronograma-alert-label">Pedido de Isenção da Taxa</span>
+                    <span class="cronograma-alert-val">08/10 a 12/10/2026</span>
+                    <span class="cronograma-alert-detail">Para inscritos no CadÚnico ou hipossuficientes conforme edital.</span>
+                </div>
+            </div>
+            <div style="margin-top: 12px; font-family: var(--font-sans); font-size: 13px;">
+                <strong>Acesso Direto:</strong> <a href="https://sig.ufsb.edu.br/sigaa/public/processo_seletivo/lista.jsf?nivel=S&amp;aba=p-stricto" target="_blank" rel="noopener noreferrer" style="color: var(--accent-wine); font-weight: 700; text-decoration: underline;">Portal de Inscrições do SIGAA / UFSB (Stricto Sensu)</a>
+            </div>
+        </div>
+
+        <h3 style="font-family: var(--font-serif-title); font-size: 18px; color: var(--accent-navy); margin: 26px 0 12px 0;">Linha do Tempo Visual das 5 Etapas do Certame</h3>
+        
+        <div class="timeline-steps">
+            <div class="timeline-step-card">
+                <div class="step-badge-col">
+                    <span class="step-number">Etapa 1</span>
+                    <span class="step-date-badge">08/10 a 20/10/2026</span>
+                </div>
+                <div class="step-info-col">
+                    <h4>Avaliação do Anteprojeto de Pesquisa (AA)</h4>
+                    <p>Submissão eletrônica do arquivo em PDF no ato da inscrição no SIGAA. Avaliação anônima pela comissão examinadora da Linha 1 (máximo rígido de 7 laudas úteis). Resultado da homologação em novembro.</p>
+                </div>
+                <div class="step-meta-col">
+                    <span class="step-weight-badge">Peso 3 (0,3)</span>
+                    <span class="step-nature-text">Eliminatória e Classificatória</span>
+                </div>
+            </div>
+
+            <div class="timeline-step-card">
+                <div class="step-badge-col">
+                    <span class="step-number">Etapa 2</span>
+                    <span class="step-date-badge">23/11/2026</span>
+                </div>
+                <div class="step-info-col">
+                    <h4>Prova Escrita de Conhecimentos (PE)</h4>
+                    <p>Presencial no Campus Sosígenes Costa (Porto Seguro/BA), das 09h às 13h (4 horas). Até 3 questões dissertativas sobre a bibliografia da Linha 1. Consulta liberada exclusivamente a textos impressos na 1ª hora (09h às 10h).</p>
+                </div>
+                <div class="step-meta-col">
+                    <span class="step-weight-badge">Peso 2 (0,2)</span>
+                    <span class="step-nature-text">Eliminatória e Classificatória</span>
+                </div>
+            </div>
+
+            <div class="timeline-step-card">
+                <div class="step-badge-col">
+                    <span class="step-number">Etapa 3</span>
+                    <span class="step-date-badge">08/12 a 10/12/2026</span>
+                </div>
+                <div class="step-info-col">
+                    <h4>Arguição Oral do Anteprojeto (AAP)</h4>
+                    <p>Sessão individual remota por videoconferência (Google Meet) de 30 minutos: 10 min de exposição oral pela candidata, 10 min de arguição pela banca examinadora e 10 min de respostas. Foco na maturidade metodológica e territorial.</p>
+                </div>
+                <div class="step-meta-col">
+                    <span class="step-weight-badge">Peso 3 (0,3)</span>
+                    <span class="step-nature-text">Eliminatória e Classificatória</span>
+                </div>
+            </div>
+
+            <div class="timeline-step-card">
+                <div class="step-badge-col">
+                    <span class="step-number">Etapa 4</span>
+                    <span class="step-date-badge">Janeiro/2027</span>
+                </div>
+                <div class="step-info-col">
+                    <h4>Análise do Currículo Lattes (ACL)</h4>
+                    <p>Avaliação exclusivamente documental baseada no barema do Anexo IX do edital: Formação Acadêmica (peso 3), Atuação Profissional e Docente (peso 3) e Produção Científica/Técnica (peso 4). Documentos comprobatórios em PDF único.</p>
+                </div>
+                <div class="step-meta-col">
+                    <span class="step-weight-badge">Peso 2 (0,2)</span>
+                    <span class="step-nature-text">Apenas Classificatória</span>
+                </div>
+            </div>
+
+            <div class="timeline-step-card">
+                <div class="step-badge-col">
+                    <span class="step-number">Etapa 5</span>
+                    <span class="step-date-badge">11/02/2027</span>
+                </div>
+                <div class="step-info-col">
+                    <h4>Heteroidentificação Étnico-Racial</h4>
+                    <p>Procedimento presencial no Campus Sosígenes Costa perante a Comissão de Heteroidentificação da UFSB. Aplicável exclusivamente aos candidatos inscritos nas vagas reservadas para pessoas negras (pretas e pardas).</p>
+                </div>
+                <div class="step-meta-col">
+                    <span class="step-weight-badge" style="background: #FDF4F5; color: var(--accent-wine); border-color: #E8C1C6;">Apto / Não Apto</span>
+                    <span class="step-nature-text">Eliminatória</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="academic-table" aria-label="Quadro sinóptico do cronograma oficial e pesos das etapas">
+                <thead>
+                    <tr>
+                        <th>Etapa da Seleção</th>
+                        <th>Modalidade / Local</th>
+                        <th>Período ou Data</th>
+                        <th>Caráter</th>
+                        <th class="center">Peso na MF</th>
+                        <th class="center">Nota Mínima</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Inscrições e Envio do Anteprojeto</strong></td>
+                        <td>Digital (SIGAA UFSB)</td>
+                        <td>08/10 a 20/10/2026 (às 23h59)</td>
+                        <td>Obrigatória</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pagamento da Taxa de Inscrição</strong></td>
+                        <td>PagTesouro (Boleto / Pix)</td>
+                        <td>Até 20/10/2026 (às 20h00)</td>
+                        <td>Obrigatória (R$ 150)</td>
+                        <td class="center">—</td>
+                        <td class="center">—</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1. Avaliação do Anteprojeto (AA)</strong></td>
+                        <td>Documental / Anônima</td>
+                        <td>Outubro a Novembro/2026</td>
+                        <td>Eliminatória e Classificatória</td>
+                        <td class="center"><strong>3 (0,3)</strong></td>
+                        <td class="center">7,0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2. Prova Escrita Presencial (PE)</strong></td>
+                        <td>Presencial (CSC - Porto Seguro)</td>
+                        <td>23/11/2026 (09h às 13h)</td>
+                        <td>Eliminatória e Classificatória</td>
+                        <td class="center"><strong>2 (0,2)</strong></td>
+                        <td class="center">7,0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3. Arguição Oral do Anteprojeto (AAP)</strong></td>
+                        <td>Remota (Google Meet)</td>
+                        <td>08/12 a 10/12/2026</td>
+                        <td>Eliminatória e Classificatória</td>
+                        <td class="center"><strong>3 (0,3)</strong></td>
+                        <td class="center">7,0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4. Análise do Currículo Lattes (ACL)</strong></td>
+                        <td>Documental (Anexo IX)</td>
+                        <td>Janeiro/2027</td>
+                        <td>Apenas Classificatória</td>
+                        <td class="center"><strong>2 (0,2)</strong></td>
+                        <td class="center">—</td>
+                    </tr>
+                    <tr>
+                        <td><strong>5. Heteroidentificação Étnico-Racial</strong></td>
+                        <td>Presencial (CSC - Porto Seguro)</td>
+                        <td>11/02/2027</td>
+                        <td>Eliminatória (Cotas)</td>
+                        <td class="center">—</td>
+                        <td class="center">Apto</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Homologação do Resultado Final</strong></td>
+                        <td>Publicação Oficial UFSB</td>
+                        <td><strong>26/02/2027</strong></td>
+                        <td>Classificatória Final</td>
+                        <td class="center"><strong>10 (1,0)</strong></td>
+                        <td class="center">7,0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="formula-card">
+            <strong>Fórmula Oficial de Cálculo da Média Final (MF):</strong>
+            <span class="formula-code">MF = (AA × 0,3) + (PE × 0,2) + (AAP × 0,3) + (ACL × 0,2)</span>
+            <span style="color: var(--text-secondary); font-size: 13px; display: block;">
+                São sumariamente eliminados os candidatos que obtiverem nota inferior a 7,0 (sete) na Avaliação do Anteprojeto, na Prova Escrita ou na Arguição Oral, ou parecer "Não Apto" na Heteroidentificação.
+            </span>
+        </div>
+    </section>
+
     <nav class="toc-box" aria-label="Sumário">
         <div class="toc-title">Sumário do Caderno</div>
         <ul class="toc-list">
+            <li><a href="#sec-cronograma">§ 0. Cronograma e Prazos do Edital PROPPG nº 30/2026</a></li>
             <li><a href="#sec-encontro">§ 1. O Direito no PPGES: Aderência e Eixos</a></li>
             <li><a href="#sec-estatisticas">§ 2. Evolução Histórica das 151 Defesas (2019–2026)</a></li>
             <li><a href="#sec-politicas">§ 3. Pesquisas em Políticas Públicas e Justiça</a></li>
             <li><a href="#sec-professores">§ 4. Corpo Docente, Lattes e Orientações</a></li>
             <li><a href="#sec-catalogo">§ 5. Acervo Completo das 151 Defesas (com busca)</a></li>
-            <li><a href="#sec-dicas">§ 6. Diretrizes Técnicas para o Anteprojeto</a></li>
+            <li><a href="#sec-dicas">§ 6. Diretrizes Técnicas e Checklist do Anteprojeto</a></li>
         </ul>
     </nav>
 """)
@@ -2177,7 +2788,7 @@ out.append("""
     <section class="section-block" id="sec-dicas">
         <div class="section-header">
             <span class="section-tag">Capítulo 6</span>
-            <h2 class="section-title">Diretrizes Técnicas para o Anteprojeto de Pesquisa</h2>
+            <h2 class="section-title">Diretrizes Técnicas e Checklist do Anteprojeto de Pesquisa</h2>
         </div>
         <p>
             O exame exaustivo das 151 defesas e as disposições do <strong>Edital PROPPG nº 30/2026</strong> permitem consolidar diretrizes estratégicas e metodológicas indispensáveis para a candidatura de graduadas e graduados em Direito:
@@ -2219,6 +2830,134 @@ out.append("""
                 <li><strong>Declaração de Integridade sobre Inteligência Artificial:</strong> O anteprojeto deve conter, em sua folha final, a declaração explícita de uso/não uso de ferramentas de inteligência artificial generativa, sob as penas de desclassificação, em cumprimento à Portaria CNPq nº 2.664/2026.</li>
                 <li><strong>Composição da Nota Final:</strong> O anteprojeto possui <strong>peso 0,3</strong> na média ponderada final: <code>MF = (Anteprojeto × 0,3) + (Prova Escrita × 0,2) + (Arguição Oral × 0,3) + (Currículo Lattes × 0,2)</code>. A nota mínima eliminatória é 7,0 por etapa.</li>
             </ul>
+        </div>
+
+        <div class="compliance-checklist-card">
+            <div class="compliance-checklist-header">
+                <h3>Checklist de Conformidade Pré-Submissão do Anteprojeto</h3>
+                <p>Verificação item a item antes do upload definitivo no SIGAA / UFSB (Edital PROPPG nº 30/2026):</p>
+            </div>
+            <div class="checklist-grid">
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>1. Limite Máximo Rígido de Extensão</span>
+                            <span class="checklist-tag danger">Eliminatório: Máx. 7 Laudas</span>
+                        </div>
+                        <p class="checklist-desc">
+                            O corpo textual do anteprojeto (Introdução, Problema, Hipótese, Justificativa, Objetivos, Referencial Teórico, Metodologia e Cronograma) possui limite rígido de <strong>até 7 laudas úteis</strong> de texto corrido. A capa/folha de rosto e as referências bibliográficas não contam nesse cômputo. Extrapolações geram perda drástica de pontos ou eliminação sumária.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>2. Anonimato Absoluto no Corpo do Texto</span>
+                            <span class="checklist-tag danger">Eliminatório: Sigilo Total</span>
+                        </div>
+                        <p class="checklist-desc">
+                            O documento <strong>NUNCA deve conter nome civil da candidata, número de inscrição na OAB, e-mail pessoal</strong>, cargos ocupados, escritórios de advocacia, menção a processos em que atuou ou quaisquer elementos autobiográficos. A quebra de anonimato acarreta desclassificação imediata.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>3. Higienização de Metadados do Arquivo PDF</span>
+                            <span class="checklist-tag danger">Sigilo Digital</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Antes de exportar o arquivo em PDF, confira as propriedades do documento (no Word: Arquivo &gt; Informações &gt; Propriedades; no LibreOffice: Arquivo &gt; Propriedades) e <strong>remova o nome do autor, da empresa e do usuário do computador</strong>, assegurando que o leitor de PDF da banca examinadora não identifique a autoria.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>4. Declaração de Integridade sobre Inteligência Artificial</span>
+                            <span class="checklist-tag danger">Portaria CNPq nº 2.664/2026</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Inserção obrigatória, na folha final após as referências bibliográficas, de cláusula explícita informando a utilização ou não de ferramentas de inteligência artificial generativa (e suas finalidades, como revisão textual ou formatação), sob pena de desclassificação formal.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>5. Indicação de 2 Opções de Orientadores da Linha 1</span>
+                            <span class="checklist-tag success">Alinhamento Estratégico</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Constar na folha de rosto anônima a indicação expressa da <strong>1ª e 2ª opção de orientador(a)</strong> dentre os docentes com vagas abertas na Linha 1 (Estado, Instituições e Governança), compatibilizando o tema do projeto com as linhas de pesquisa declaradas pelos professores.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>6. Formatação Gráfica e Padrões Técnicos ABNT</span>
+                            <span class="checklist-tag">Normas ABNT em PDF</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Arquivo exportado obrigatoriamente em formato PDF (.pdf). Formatação: folha A4, fonte Times New Roman 12 ou Arial 12, espaçamento entrelinhas 1,5, margens superior e esquerda de 3,0 cm, inferior e direita de 2,0 cm, recuo de primeira linha de parágrafo regular (1,25 cm), e referências bibliográficas alinhadas à esquerda e formatadas segundo a <strong>ABNT NBR 6023</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>7. Ancoragem Territorial e Epistemológica no Sul da Bahia</span>
+                            <span class="checklist-tag success">O Direito em Ação</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Problema de pesquisa explicitamente situado no contexto empírico e sociopolítico do Sul e Extremo Sul da Bahia (Porto Seguro, Eunápolis, Teixeira de Freitas, Itamaraju, Ilhéus, etc.), investigando a eficácia concreta das instituições e direitos, superando o dogmatismo exegético abstrato.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="checklist-item">
+                    <div class="checklist-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="checklist-body">
+                        <div class="checklist-item-title">
+                            <span>8. Diálogo com a Bibliografia Obrigatória da Linha 1</span>
+                            <span class="checklist-tag">Referencial Teórico</span>
+                        </div>
+                        <p class="checklist-desc">
+                            Articulação teórica com ao menos uma das obras obrigatórias da Linha 1 do Edital 2026/2027: Brunet &amp; Bucci (governança pública e arranjos institucionais), Ailton Krenak (pensamento socioambiental e decolonial) e Roberto Rabbani (função socioambiental e tributação).
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="table-responsive">
