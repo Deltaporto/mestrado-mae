@@ -1,0 +1,2521 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+import json
+import re
+import html
+import unicodedata
+from pathlib import Path
+from collections import Counter, defaultdict
+
+# Load catalog data
+json_path = Path(r"C:\Users\Casa\.gemini\antigravity\brain\6738a72b-0664-43b4-b7b5-77b8a9c32ac0\scratch\catalog_defesas.json")
+catalog = json.load(open(json_path, encoding="utf-8"))
+
+def norm(s):
+    if not s:
+        return ""
+    return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore').decode('utf-8').lower().strip()
+
+def clean_and_capitalize_abstract(res):
+    if not res:
+        return ""
+    res = res.strip()
+    
+    # Strip leading metadata if present
+    m = re.search(r'\b(20[12]\d)\s+(?:disserta[çc][ãa]o|tese)\s+(.*)', res, flags=re.IGNORECASE | re.DOTALL)
+    if m:
+        rem = m.group(2).strip()
+    else:
+        m2 = re.search(r'\b\d{2}/\d{2}/(20[12]\d)\s+(.*)', res, flags=re.IGNORECASE | re.DOTALL)
+        if m2:
+            rem = m2.group(2).strip()
+            rem = re.sub(r'^(?:20[12]\d\s+)?(?:disserta[çc][ãa]o|tese)\s+', '', rem, flags=re.IGNORECASE).strip()
+        else:
+            rem = res
+
+    if not rem:
+        return ""
+
+    # Capitalize first character
+    rem = rem[0].upper() + rem[1:]
+
+    # Capitalize after periods, exclamation marks, question marks
+    def cap_after_punct(match):
+        punct = match.group(1)
+        space = match.group(2)
+        char = match.group(3)
+        return f"{punct}{space}{char.upper()}"
+        
+    rem = re.sub(r'([.!?])(\s+)([a-záàâãéèêíïóôõúüç])', cap_after_punct, rem)
+
+    # Standard academic and institutional acronyms
+    acronyms = [
+        r'\bppges\b', r'\bufsb\b', r'\bcnj\b', r'\btjba\b', r'\bsuas\b', r'\bcras\b',
+        r'\bcreas\b', r'\bsus\b', r'\badi\b', r'\bcejusc\b', r'\bcejuscs\b',
+        r'\bcapes\b', r'\bcnpq\b', r'\bcfchs\b', r'\bproppg\b', r'\boab\b',
+        r'\brasp\b', r'\bclt\b', r'\bstf\b', r'\bstj\b', r'\bufba\b', r'\bunesp\b',
+        r'\busp\b', r'\bufmg\b', r'\bufrj\b', r'\bunb\b', r'\bmec\b', r'\bpnaes\b',
+        r'\bpnae\b', r'\bifba\b', r'\blgbt\b', r'\blgbtqia\+?\b', r'\bcpi\b'
+    ]
+    for acr in acronyms:
+        rem = re.sub(acr, lambda m: m.group(0).upper(), rem, flags=re.IGNORECASE)
+
+    # Regional place names and proper nouns
+    proper_nouns = [
+        (r'\bporto seguro\b', 'Porto Seguro'),
+        (r'\beun[aá]polis\b', 'Eunápolis'),
+        (r'\bteixeira de freitas\b', 'Teixeira de Freitas'),
+        (r'\bitamaraju\b', 'Itamaraju'),
+        (r'\bilh[eé]us\b', 'Ilhéus'),
+        (r'\bsanta cruz cabr[aá]lia\b', 'Santa Cruz Cabrália'),
+        (r'\bcoroa vermelha\b', 'Coroa Vermelha'),
+        (r'\bmonte pascoal\b', 'Monte Pascoal'),
+        (r'\bvale verde\b', 'Vale Verde'),
+        (r'\bextremo sul baiano\b', 'Extremo Sul Baiano'),
+        (r'\bextremo sul\b', 'Extremo Sul'),
+        (r'\bsul da bahia\b', 'Sul da Bahia'),
+        (r'\bbahia\b', 'Bahia'),
+        (r'\bbrasil\b', 'Brasil'),
+        (r'\bpatax[oó]\b', 'Pataxó'),
+        (r'\btupinamb[aá]\b', 'Tupinambá'),
+    ]
+    for pat, rep in proper_nouns:
+        rem = re.sub(pat, rep, rem, flags=re.IGNORECASE)
+
+    return rem
+
+for d in catalog:
+    d['orientador_clean'] = d.get('orientador', '').replace("Texto Integral", "").strip()
+    d['clean_resumo'] = clean_and_capitalize_abstract(d.get('resumo', ''))
+
+by_year = defaultdict(list)
+for d in catalog:
+    by_year[d['ano']].append(d)
+
+advisor_counts = Counter(d['orientador_clean'] for d in catalog)
+
+# Verify statistics
+stats_by_year = {}
+for y in sorted(by_year.keys(), reverse=True):
+    items = by_year[y]
+    m_count = sum(1 for it in items if 'mestrado' in it['nivel'].lower())
+    t_count = sum(1 for it in items if 'doutorado' in it['nivel'].lower())
+    pdf_count = sum(1 for it in items if bool(it.get('link_pdf') and it['link_pdf'].strip()))
+    stats_by_year[y] = {
+        'mestrado': m_count,
+        'doutorado': t_count,
+        'total': len(items),
+        'pdf': pdf_count
+    }
+
+# Build HTML
+out = []
+
+out.append("""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panorama de Dissertações e Teses: PPGES (UFSB) | 2019-2026</title>
+    <meta name="description" content="Panorama interativo das 151 dissertações e teses defendidas no Programa de Pós-Graduação em Estado e Sociedade (PPGES/UFSB), com análise de aderência jurídica, currículos Lattes dos docentes e diretrizes para anteprojeto.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-page: #FBF9F5;
+            --bg-card: #FFFFFF;
+            --bg-card-subtle: #F6F3EC;
+            --bg-highlight: #F0ECE1;
+            
+            --text-main: #23262B;
+            --text-secondary: #585E6A;
+            --text-muted: #7A808C;
+            
+            --accent-navy: #1B365D;
+            --accent-navy-light: #2C5282;
+            --accent-wine: #782635;
+            --accent-wine-light: #9B3245;
+            --accent-gold: #966E36;
+            --accent-green: #295743;
+            --accent-green-light: #3D7A5E;
+            
+            --border-light: #E7E2D8;
+            --border-medium: #D5CEBF;
+            --border-dark: #A39B8B;
+            
+            --font-serif-title: 'Lora', 'Georgia', serif;
+            --font-serif-body: 'Source Serif 4', 'Charter', 'Georgia', serif;
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            
+            --measure: 890px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            font-family: var(--font-serif-body);
+            font-size: 16.5px;
+            line-height: 1.72;
+            padding: 30px 16px 60px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -50px;
+            left: 20px;
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            padding: 8px 16px;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            border-radius: 0 0 4px 4px;
+            transition: top 0.2s ease;
+            text-decoration: none;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 3px solid var(--accent-wine);
+        }
+
+        .page-container {
+            max-width: var(--measure);
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 48px 56px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px 6px 40px 6px; }
+            .page-container { padding: 28px 18px; }
+        }
+
+        .institutional-header {
+            border-bottom: 2px solid var(--border-medium);
+            padding-bottom: 24px;
+            margin-bottom: 34px;
+            text-align: center;
+        }
+
+        .inst-sub {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: var(--accent-wine);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .inst-name {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .main-title {
+            font-family: var(--font-serif-title);
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .main-title { font-size: 24px; }
+        }
+
+        .main-subtitle {
+            font-family: var(--font-sans);
+            font-size: 17px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .doc-meta-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .doc-meta-badge {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-light);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .intro-box {
+            background: var(--bg-card-subtle);
+            border-left: 4px solid var(--accent-navy);
+            padding: 22px 26px;
+            margin-bottom: 38px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .intro-box h3 {
+            font-family: var(--font-sans);
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-navy);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .intro-box p {
+            margin-bottom: 10px;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--text-main);
+        }
+
+        .intro-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .toc-box {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 22px 26px;
+            margin-bottom: 44px;
+        }
+
+        .toc-title {
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-wine);
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 8px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 24px;
+        }
+
+        @media (max-width: 650px) {
+            .toc-list { grid-template-columns: 1fr; }
+        }
+
+        .toc-list li a {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            color: var(--accent-navy);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s ease;
+            display: inline-block;
+        }
+
+        .toc-list li a:hover {
+            color: var(--accent-wine);
+            text-decoration: underline;
+        }
+
+        /* Section layout */
+        .section-block {
+            margin-bottom: 48px;
+        }
+
+        .section-header {
+            border-bottom: 2px solid var(--accent-navy);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .section-tag {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--accent-wine);
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-family: var(--font-serif-title);
+            font-size: 23px;
+            color: var(--accent-navy);
+            font-weight: 700;
+            flex-grow: 1;
+            margin-left: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .section-title {
+                margin-left: 0;
+                font-size: 20px;
+                width: 100%;
+            }
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 24px 0;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .academic-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            background: #FFFFFF;
+        }
+
+        .academic-table th {
+            background-color: var(--bg-card-subtle);
+            color: var(--accent-navy);
+            font-weight: 700;
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--border-medium);
+            font-size: 13px;
+        }
+
+        .academic-table th.center, .academic-table td.center {
+            text-align: center;
+        }
+
+        .academic-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-main);
+            vertical-align: top;
+        }
+
+        .academic-table tbody tr:hover {
+            background-color: var(--bg-page);
+        }
+
+        .academic-table tfoot td {
+            background-color: var(--bg-card-subtle);
+            font-weight: 700;
+            border-top: 2px solid var(--border-medium);
+            border-bottom: none;
+        }
+
+        /* Policy Cards */
+        .policy-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-left: 4px solid var(--accent-navy);
+            border-radius: 0 4px 4px 0;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .policy-card.wine-accent { border-left-color: var(--accent-wine); }
+        .policy-card.gold-accent { border-left-color: var(--accent-gold); }
+        .policy-card.green-accent { border-left-color: var(--accent-green); }
+
+        .policy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .policy-name {
+            font-family: var(--font-sans);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-navy);
+        }
+
+        .policy-card.wine-accent .policy-name { color: var(--accent-wine); }
+        .policy-card.gold-accent .policy-name { color: var(--accent-gold); }
+        .policy-card.green-accent .policy-name { color: var(--accent-green); }
+
+        .policy-count-tag {
+            font-family: var(--font-sans);
+            font-size: 11.5px;
+            color: var(--text-muted);
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-light);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .policy-body {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .policy-examples {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            background: var(--bg-card-subtle);
+            padding: 12px 14px;
+            border-radius: 3px;
+            border: 1px solid var(--border-light);
+        }
+
+        .policy-examples strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            font-size: 12.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .policy-examples ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .policy-examples li {
+            margin-bottom: 6px;
+            padding-left: 14px;
+            position: relative;
+            line-height: 1.55;
+        }
+
+        .policy-examples li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-wine);
+            font-weight: bold;
+        }
+
+        .policy-examples a {
+            color: var(--accent-navy);
+            text-decoration: underline;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        /* Faculty Cards */
+        .faculty-subheading {
+            font-family: var(--font-sans);
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-wine);
+            font-weight: 700;
+            margin: 26px 0 14px 0;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 6px;
+        }
+
+        .faculty-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 820px) {
+            .faculty-grid { grid-template-columns: 1fr; }
+        }
+
+        .faculty-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .faculty-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .faculty-card.law-focus {
+            border-top: 4px solid var(--accent-navy);
+        }
+
+        .faculty-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .faculty-name {
+            font-family: var(--font-sans);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            line-height: 1.35;
+        }
+
+        .faculty-badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #EBF1F8;
+            color: var(--accent-navy);
+            margin-bottom: 8px;
+        }
+
+        .faculty-vagas-badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #FDF3E7;
+            color: #92540D;
+            border: 1px solid #F5D3A6;
+            margin-bottom: 10px;
+        }
+
+        .faculty-cohort-badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #EEF8F1;
+            color: #1E6B39;
+            border: 1px solid #C4E6CD;
+            margin-bottom: 10px;
+        }
+
+        .faculty-training {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.45;
+        }
+
+        .faculty-desc {
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .faculty-tip-box {
+            background: #FAF7F0;
+            border-left: 3px solid var(--accent-gold);
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            font-family: var(--font-sans);
+            color: #4A3E2C;
+            line-height: 1.5;
+        }
+
+        .faculty-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .faculty-lattes-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            padding: 5px 10px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-navy);
+            text-decoration: none;
+            border-radius: 3px;
+            transition: all 0.15s ease;
+        }
+
+        .faculty-lattes-btn:hover {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+        }
+
+        .faculty-filter-btn {
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            padding: 5px 10px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-wine);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .faculty-filter-btn:hover {
+            background: var(--accent-wine);
+            color: #FFFFFF;
+            border-color: var(--accent-wine);
+        }
+
+        .faculty-meta {
+            font-family: var(--font-sans);
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Catalog Search and Filter Controls */
+        .catalog-controls {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-radius: 5px;
+            padding: 22px 24px;
+            margin: 28px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 10px 14px;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-navy);
+            box-shadow: 0 0 0 3px rgba(27, 54, 93, 0.12);
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 8px;
+            display: none;
+        }
+
+        .search-clear-btn:hover {
+            color: var(--accent-wine);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .filter-group-label {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            padding: 6px 12px;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-navy);
+            color: var(--accent-navy);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+        }
+
+        .filter-select {
+            padding: 6px 10px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            border: 1px solid var(--border-medium);
+            border-radius: 3px;
+            background: #FFFFFF;
+            color: var(--text-main);
+            outline: none;
+            min-width: 220px;
+            max-width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .filter-select {
+                width: 100%;
+                min-width: unset;
+            }
+            .filter-group-label {
+                width: 100%;
+                margin-bottom: 2px;
+            }
+        }
+
+        .filter-select:focus {
+            border-color: var(--accent-navy);
+            box-shadow: 0 0 0 2px rgba(27, 54, 93, 0.12);
+        }
+
+        .catalog-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+            margin-top: 12px;
+        }
+
+        .catalog-counter {
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--accent-navy);
+        }
+
+        .batch-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .small-action-btn {
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .small-action-btn:hover {
+            background: #FFFFFF;
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        /* Thesis entries */
+        .catalog-year-header {
+            font-family: var(--font-serif-title);
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--accent-wine);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 6px;
+            margin: 40px 0 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .catalog-year-header .year-count {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: normal;
+            color: var(--text-muted);
+        }
+
+        .thesis-entry {
+            padding: 18px 0;
+            border-bottom: 1px dotted var(--border-light);
+            transition: background-color 0.15s ease;
+        }
+
+        .thesis-entry:hover {
+            background-color: rgba(0,0,0,0.005);
+        }
+
+        .thesis-entry:last-child {
+            border-bottom: none;
+        }
+
+        .thesis-top-meta {
+            font-family: var(--font-sans);
+            font-size: 11.5px;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .type-badge {
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .type-badge.dissertacao {
+            background: #E8EEF5;
+            color: var(--accent-navy);
+        }
+
+        .type-badge.tese {
+            background: #F7EAEB;
+            color: var(--accent-wine);
+        }
+
+        .thesis-date {
+            color: var(--text-muted);
+        }
+
+        .thesis-author {
+            font-family: var(--font-sans);
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 15px;
+            letter-spacing: 0.2px;
+        }
+
+        .thesis-title {
+            font-family: var(--font-serif-title);
+            font-size: 17px;
+            color: var(--text-main);
+            line-height: 1.42;
+            margin: 6px 0 10px 0;
+            font-weight: 600;
+        }
+
+        .thesis-bottom-meta {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .advisor-btn-link {
+            background: none;
+            border: none;
+            color: var(--accent-navy);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .advisor-btn-link:hover {
+            color: var(--accent-wine);
+        }
+
+        .pdf-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--accent-green);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12.5px;
+            padding: 4px 9px;
+            border-radius: 3px;
+            background: #EDF5F0;
+            border: 1px solid #D5E8DC;
+            transition: all 0.15s ease;
+        }
+
+        .pdf-link:hover {
+            background: var(--accent-green);
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .pdf-missing {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Abstract Details / Accordion */
+        .thesis-abstract-details {
+            margin-top: 8px;
+            border-top: 1px dashed #EDE8DF;
+            padding-top: 6px;
+        }
+
+        .thesis-abstract-details summary {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent-navy);
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .thesis-abstract-details summary:hover {
+            color: var(--accent-wine);
+            background: #F4EFEA;
+        }
+
+        .thesis-abstract-details summary:focus-visible {
+            outline: 2px solid var(--accent-navy);
+            background: #F4EFEA;
+        }
+
+        .thesis-abstract-details[open] summary {
+            margin-bottom: 8px;
+            color: var(--accent-wine);
+        }
+
+        .thesis-abstract-content {
+            background: #FAF8F4;
+            border-left: 3px solid var(--border-medium);
+            padding: 14px 18px;
+            border-radius: 0 4px 4px 0;
+            font-size: 14.5px;
+            line-height: 1.68;
+            color: #383D45;
+            text-align: justify;
+        }
+
+        /* Guidelines */
+        .guideline-card {
+            background: #FAF7F0;
+            border-left: 4px solid var(--accent-wine);
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .guideline-card.navy { border-left-color: var(--accent-navy); }
+        .guideline-card.gold { border-left-color: var(--accent-gold); }
+        .guideline-card.green { border-left-color: var(--accent-green); }
+
+        .guideline-title {
+            font-family: var(--font-serif-title);
+            font-size: 17px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .guideline-card .guideline-title { color: var(--accent-wine); }
+        .guideline-card.navy .guideline-title { color: var(--accent-navy); }
+        .guideline-card.gold .guideline-title { color: var(--accent-gold); }
+        .guideline-card.green .guideline-title { color: var(--accent-green); }
+
+        .guideline-card p {
+            margin: 0;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .guardrail-alert {
+            background: #FDF4F5;
+            border: 1px solid #E8C1C6;
+            border-left: 4px solid var(--accent-wine);
+            padding: 16px 20px;
+            margin: 22px 0;
+            border-radius: 4px;
+        }
+
+        .guardrail-alert h4 {
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-wine);
+            margin-bottom: 8px;
+        }
+
+        .guardrail-alert ul {
+            font-size: 14.5px;
+            line-height: 1.6;
+            padding-left: 20px;
+            color: var(--text-main);
+        }
+
+        .guardrail-alert li {
+            margin-bottom: 6px;
+        }
+
+        /* Floating Back to Top Button */
+        #backToTopBtn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 99;
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        #backToTopBtn:hover {
+            background: var(--accent-wine);
+            transform: translateY(-2px);
+        }
+
+        .print-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .print-btn {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            padding: 8px 16px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-navy);
+            border-radius: 3px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .print-btn:hover {
+            background: #F4EFEA;
+            border-color: var(--accent-navy);
+        }
+
+        .editorial-footer {
+            border-top: 2px solid var(--border-medium);
+            padding-top: 32px;
+            margin-top: 60px;
+            text-align: center;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+        .editorial-footer strong {
+            color: var(--text-main);
+        }
+
+        @media print {
+            body {
+                background: #FFFFFF !important;
+                padding: 0 !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+            }
+            .page-container {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+            .print-bar, .catalog-controls, .toc-box, #backToTopBtn, .skip-link, .faculty-actions {
+                display: none !important;
+            }
+            .policy-card, .faculty-card, .thesis-entry, .guideline-card {
+                page-break-inside: avoid;
+            }
+            a {
+                color: #000000 !important;
+                text-decoration: underline !important;
+            }
+            .pdf-link {
+                background: none !important;
+                padding: 0 !important;
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<a href="#sec-catalogo" class="skip-link">Pular direto para o catálogo de defesas</a>
+
+<button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Voltar ao topo" aria-label="Voltar ao topo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+</button>
+
+<div class="page-container">
+
+    <div class="print-bar">
+        <span style="font-family: var(--font-sans); font-size: 12.5px; color: var(--text-muted);">Caderno Técnico de Análise Empírica e Planejamento Acadêmico</span>
+        <button class="print-btn" onclick="window.print()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Imprimir ou Salvar em PDF
+        </button>
+    </div>
+
+    <header class="institutional-header">
+        <div class="inst-sub">Universidade Federal do Sul da Bahia</div>
+        <div class="inst-name">Centro de Formação em Ciências Humanas e Sociais (CFCHS)</div>
+        <h1 class="main-title">Programa de Pós-Graduação em Estado e Sociedade</h1>
+        <p class="main-subtitle">Panorama das 151 Dissertações e Teses Defendidas (2019–2026)</p>
+        <div class="doc-meta-row">
+            <span class="doc-meta-badge"><strong>Campus:</strong> Sosígenes Costa (Porto Seguro, BA)</span>
+            <span class="doc-meta-badge"><strong>Fonte:</strong> Acervo do SIGAA / UFSB</span>
+            <span class="doc-meta-badge"><strong>Total:</strong> 151 defesas (86 mestrados / 65 doutorados)</span>
+            <span class="doc-meta-badge"><strong>Acervo Aberto:</strong> 129 textos integrais (85,4%)</span>
+        </div>
+    </header>
+
+    <div class="intro-box">
+        <h3>Apresentação e Escopo do Documento</h3>
+        <p>
+            Este caderno documenta e examina sistematicamente o histórico de defesas do PPGES da UFSB entre 2019 e 2026. A finalidade do mapeamento é identificar os temas admitidos pelo corpo docente, os perfis metodológicos recorrentes e as condições de enquadramento de pesquisas da área jurídica nas linhas do programa, com foco especial no <strong>Edital PROPPG nº 30/2026</strong>.
+        </p>
+        <p>
+            A graduação em Direito possui aderência prioritária à <strong>Linha 1 (Estado, Instituições e Governança)</strong>. O programa privilegia o exame empírico das normas constitucionais, da atuação dos órgãos de justiça e segurança pública, e dos conflitos distributivos na região Sul e Extremo Sul da Bahia, rejeitando abordagens puramente dogmáticas ou exegéticas desprovidas de ancoragem sociopolítica e territorial.
+        </p>
+    </div>
+
+    <nav class="toc-box" aria-label="Sumário">
+        <div class="toc-title">Sumário do Caderno</div>
+        <ul class="toc-list">
+            <li><a href="#sec-encontro">§ 1. O Direito no PPGES: Aderência e Eixos</a></li>
+            <li><a href="#sec-estatisticas">§ 2. Evolução Histórica das 151 Defesas (2019–2026)</a></li>
+            <li><a href="#sec-politicas">§ 3. Pesquisas em Políticas Públicas e Justiça</a></li>
+            <li><a href="#sec-professores">§ 4. Corpo Docente, Lattes e Orientações</a></li>
+            <li><a href="#sec-catalogo">§ 5. Acervo Completo das 151 Defesas (com busca)</a></li>
+            <li><a href="#sec-dicas">§ 6. Diretrizes Técnicas para o Anteprojeto</a></li>
+        </ul>
+    </nav>
+""")
+
+# Section 1
+out.append("""
+    <section class="section-block" id="sec-encontro">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 1</span>
+            <h2 class="section-title">O Enquadramento da Pesquisa Jurídica no PPGES</h2>
+        </div>
+        <p>
+            O Programa de Pós-Graduação em Estado e Sociedade da UFSB adota regime marcadamente interdisciplinar, constituindo espaço de convergência entre o Direito, a Sociologia Política, a Antropologia e a Ciência Política. O programa forma pesquisadores voltados ao exame do papel do Estado, da eficácia social das normas e dos conflitos materiais por direitos.
+        </p>
+        <p>
+            A <strong>Linha 1 (Estado, Instituições e Governança)</strong> concentra as propostas com fundamentação jurídica. O histórico de defesas do programa indica quatro eixos de convergência essenciais:
+        </p>
+        <ul style="padding-left: 28px; margin-bottom: 20px; line-height: 1.8;">
+            <li><strong>Direito Constitucional e Políticas Públicas:</strong> Condições materiais de implementação de direitos fundamentais à saúde, educação, previdência e assistência social no nível local.</li>
+            <li><strong>Instituições do Sistema de Justiça:</strong> Atuação do Poder Judiciário, Ministério Público, Defensoria Pública, audiências de custódia, centros judiciários de solução consensual de conflitos (CEJUSCs) e sistema prisional.</li>
+            <li><strong>Direitos Humanos e Antidiscriminatórios:</strong> Acesso à justiça para mulheres, população negra, povos indígenas (Pataxó e Tupinambá) e comunidades remanescentes de quilombos.</li>
+            <li><strong>Função Socioambiental e Regulação Territorial:</strong> Conflitos possessórios, regularização fundiária, tributação ambiental (IPTU/ICMS ecológico) e governança das águas no Sul da Bahia.</li>
+        </ul>
+        <p>
+            A análise do acervo revela que <strong>110 das 151 defesas (72,8%)</strong> enfrentam diretamente institutos jurídicos, atos normativos ou a operação institucional de políticas públicas, o que consolida o PPGES como ambiente de excelência para graduadas e graduados em Direito que desenvolvem pesquisa empírica.
+        </p>
+    </section>
+""")
+
+# Section 2
+out.append("""
+    <section class="section-block" id="sec-estatisticas">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 2</span>
+            <h2 class="section-title">Evolução Histórica das Defesas (2019 a 2026)</h2>
+        </div>
+        <p>
+            O programa registrou 151 defesas desde a conclusão da primeira turma de mestrado em 2019. A formação iniciou com turmas de mestrado acadêmico (2019–2020) e expandiu para o doutorado a partir de 2021, apresentando ritmo contínuo e consolidação na pós-graduação brasileira.
+        </p>
+        <div class="table-responsive">
+            <table class="academic-table" aria-label="Estatísticas históricas das defesas do PPGES por ano">
+                <thead>
+                    <tr>
+                        <th>Ano Letivo</th>
+                        <th class="center">Dissertações (Mestrado)</th>
+                        <th class="center">Teses (Doutorado)</th>
+                        <th class="center">Total de Defesas</th>
+                        <th class="center">Participação (%)</th>
+                        <th class="center">Disponibilidade de Texto Integral</th>
+                    </tr>
+                </thead>
+                <tbody>
+""")
+
+years_sorted = sorted(stats_by_year.keys(), reverse=True)
+tot_m = sum(stats_by_year[y]['mestrado'] for y in years_sorted)
+tot_t = sum(stats_by_year[y]['doutorado'] for y in years_sorted)
+tot_all = sum(stats_by_year[y]['total'] for y in years_sorted)
+tot_pdf = sum(stats_by_year[y]['pdf'] for y in years_sorted)
+
+for y in years_sorted:
+    st = stats_by_year[y]
+    pct = (st['total'] / tot_all) * 100
+    pdf_text = f"{st['pdf']} de {st['total']} disponíveis"
+    out.append(f"""                    <tr>
+                        <td><strong>{y}</strong></td>
+                        <td class="center">{st['mestrado']}</td>
+                        <td class="center">{st['doutorado']}</td>
+                        <td class="center"><strong>{st['total']}</strong></td>
+                        <td class="center">{pct:.1f}%</td>
+                        <td class="center">{pdf_text}</td>
+                    </tr>""")
+
+out.append(f"""                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><strong>TOTAL GERAL</strong></td>
+                        <td class="center"><strong>{tot_m}</strong></td>
+                        <td class="center"><strong>{tot_t}</strong></td>
+                        <td class="center"><strong>{tot_all}</strong></td>
+                        <td class="center"><strong>100,0%</strong></td>
+                        <td class="center"><strong>{tot_pdf} trabalhos em PDF ({tot_pdf/tot_all*100:.1f}%)</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <p style="font-size: 15px; color: var(--text-secondary); font-style: italic;">
+            * Nota institucional: Das 18 defesas realizadas no ciclo de 2026, 13 cumprem o prazo regulamentar para entrega da versão final com ficha catalográfica e homologação das atas no SIGAA, após o que os arquivos são liberados para acesso público irrestrito.
+        </p>
+    </section>
+""")
+
+# Section 3
+out.append("""
+    <section class="section-block" id="sec-politicas">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 3</span>
+            <h2 class="section-title">Áreas de Investigação em Políticas Públicas e Sistema de Justiça</h2>
+        </div>
+        <p>
+            As pesquisas do PPGES analisam a formulação, implementação e controle social das políticas públicas na escala regional e municipal. A produção empírica organiza-se em sete setores fundamentais:
+        </p>
+
+        <div class="policy-card">
+            <div class="policy-header">
+                <div class="policy-name">1. Assistência Social, SUAS e Trabalho Social</div>
+                <span class="policy-count-tag">Proteção Social</span>
+            </div>
+            <div class="policy-body">
+                Avaliação dos serviços prestados nos Centros de Referência de Assistência Social (CRAS e CREAS), assédio moral e condições laborais das equipes multiprofissionais, e garantia de direitos para a população em situação de rua.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>Assédio moral na assistência social: um estudo com trabalhadoras e trabalhadores do SUAS em Eunápolis, BA</em> (Dissertação, 2024). Autora: Rozana Maria da Fonseca. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1059655&key=437aa837fb6586b904dec50162b7d2ca" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Democratização do acesso a direitos e luta por visibilidade: uma análise sobre o Movimento Nacional de População em Situação de Rua</em> (Dissertação, 2019). Autora: Kelly Cristina Santos Morais. Orientador: Prof. Dr. Gustavo Bruno Bicalho Gonçalves. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=357542&key=7385ab5153240e06b360ca2e1f305b53" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Violência relacionada ao trabalho e os fatores de risco psicossociais: o contexto do SUAS</em> (Dissertação, 2026). Autora: Gabrielli Sobral Dias. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. [Em homologação]</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card wine-accent">
+            <div class="policy-header">
+                <div class="policy-name">2. Sistema de Justiça, Segurança Pública e Execução Penal</div>
+                <span class="policy-count-tag">Poder Judiciário</span>
+            </div>
+            <div class="policy-body">
+                Pesquisas sobre o impacto de resoluções do Conselho Nacional de Justiça, eficácia de centros judiciários de conciliação e mediação, rotinas de audiências de custódia e dinâmicas prisionais na Bahia.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>O ingresso de pessoas negras no Tribunal de Justiça do Estado da Bahia a partir da Resolução nº 203/2015 do CNJ: comarcas do Extremo Sul</em> (Dissertação, 2026). Autora: Heleonora Ferreira da Silva. Orientadora: Profa. Dra. Carolina Bessa Ferreira de Oliveira. [Em homologação]</li>
+                    <li><em>Política pública de mediação e acesso efetivo à Justiça: um estudo comparativo entre Centros Judiciários de Teixeira de Freitas, BA</em> (Tese, 2023). Autor: Tiago Pereira Aguiar Susmickat. Orientador: Prof. Dr. Herbert Toledo Martins. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=914769&key=2541206888ad56c45caa227d0157e713" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>“Doutor, eu vou ficar preso?”: Análise da audiência de custódia na comarca de Porto Seguro, Bahia</em> (Dissertação, 2024). Autor: Emerson da Silva Mendes. Orientador: Prof. Dr. Herbert Toledo Martins. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1086739&key=2faa605a64536dc7ba5e8825fe8493ab" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Políticas de segurança pública em Porto Seguro, BA: um estudo interdisciplinar sobre a Base Comunitária de Segurança do Baianão</em> (Dissertação, 2020). Autor: Silvoney Silva Pena. Orientador: Prof. Dr. Roberto Muhajir Rahnemay Rabbani. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=699154&key=0a92be5579ce233395a7275604088470" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card gold-accent">
+            <div class="policy-header">
+                <div class="policy-name">3. Políticas Educacionais e Ações Afirmativas</div>
+                <span class="policy-count-tag">Educação Pública</span>
+            </div>
+            <div class="policy-body">
+                Análise da efetivação de diretrizes curriculares, implementação de cotas étnico-raciais em concursos e vestibulares, educação escolar quilombola e inclusão educacional de pessoas com deficiência.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>A política de educação infantil e os espaços físicos para crianças de zero a seis anos: análise a partir da abordagem do ciclo de políticas públicas</em> (Tese, 2022). Autora: Márcia Lacerda Santos Santana. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=856270&key=dd87ca7f9c053a2392770f58a745044e" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>O Programa Nacional de Alimentação Escolar e a Agricultura Familiar sob a ótica do desenvolvimento como liberdade</em> (Tese, 2022). Autora: Nara Eloy Machado Maturino. Orientador: Prof. Dr. Álamo Pimentel Gonçalves da Silva. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=843732&key=9f0008e5535710def4727bfb27a5b65b" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>18 Anos da Lei de Libras: avanços ou retrocessos nas políticas públicas de inclusão dos surdos?</em> (Dissertação, 2021). Autora: Angela Lemos de Oliveira. Orientadora: Profa. Dra. Christianne Benatti Rochebois. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=768181&key=2c17d1f47cd48a7799e68086254873ca" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card green-accent">
+            <div class="policy-header">
+                <div class="policy-name">4. Saúde Coletiva, Controle Social e Direitos Reprodutivos</div>
+                <span class="policy-count-tag">Sistema Único de Saúde</span>
+            </div>
+            <div class="policy-body">
+                Funcionamento de conselhos municipais de saúde, direitos sexuais e reprodutivos, itinerários de acesso à esterilização cirúrgica no SUS e saúde de populações tradicionais e ciganas.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>Participação, sociedade civil e a capacidade de influenciar políticas sociais: o caso do Conselho Municipal de Saúde de Teixeira de Freitas</em> (Dissertação, 2020). Autora: Betânia do Amaral e Souza. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=473294&key=4b06541b1c8b63a7e21c6d876f120275" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Itinerários reprodutivos e a busca pela laqueadura tubária no SUS</em> (Dissertação, 2024). Autora: Paola Damascena Possari. Orientadora: Profa. Dra. Ana Carneiro Cerqueira. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1221944&key=a1a865eabfb4fa08cefd800ee62439bf" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Filhos do Vento: adaptação e validação do PCATool Brasil versão povos ciganos adultos para a atenção primária</em> (Tese, 2023). Autora: Dayse Batista Santos. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1001767&key=82f334ec10fefdfdc33f8dd1fec39a75" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card">
+            <div class="policy-header">
+                <div class="policy-name">5. Governança Federativa e Consórcios Públicos</div>
+                <span class="policy-count-tag">Administração Pública</span>
+            </div>
+            <div class="policy-body">
+                Arranjos federativos intermunicipais, consórcios públicos para saneamento e desenvolvimento, cooperação intergovernamental e capacidades estatais no Litoral Sul da Bahia.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>A relação da multiplicidade de competências administrativas em Coroa Vermelha (BA) com as omissões do Estado: o consórcio público como instrumento jurídico de diálogo e ação</em> (Dissertação, 2022). Autor: Emmanuel Mendes Ferraz Soares. Orientador: Prof. Dr. Roberto Muhajir Rahnemay Rabbani. <span class="pdf-missing" title="Catalogado no acervo institucional">[Acervo UFSB]</span></li>
+                    <li><em>Instituições e desenvolvimento territorial no Litoral Sul da Bahia: capacidades institucionais</em> (Tese, 2021). Autor: Carlos Henrique Leite Borges. Orientadora: Profa. Dra. Maria José Teixeira Carneiro. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=621668&key=362965f40fbd3400ae991e20be07393e" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Política pública de assistência técnica e inclusão socioprodutiva: Rede Mata Atlântica no Baixo Sul da Bahia</em> (Dissertação, 2019). Autora: Adriana Vilas-Bôas Borges. Orientadora: Profa. Dra. Sandra Adriana Neves Nunes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=354767&key=e7c7d2babc29f577ca4a353719d81b67" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card wine-accent">
+            <div class="policy-header">
+                <div class="policy-name">6. Conflitos Fundiários e Gestão Territorial</div>
+                <span class="policy-count-tag">Direito Socioambiental</span>
+            </div>
+            <div class="policy-body">
+                Demarcação de terras tradicionalmente ocupadas, sobreposição com unidades de conservação, disputas hídricas, e atuação do Poder Judiciário em ações possessórias e constitucionais.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>Terras Indígenas e Unidades de Conservação da Natureza: sobreposição de territórios, políticas públicas federais e direitos humanos no Extremo Sul da Bahia</em> (Tese, 2021). Autor: Ciro de Lopes e Barbuda. Orientadora: Profa. Dra. May Waddington Telles Ribeiro. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=718960&key=f55983bf2ba11113891b8ce5d95976c7" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Protagonismo indígena e governança da água em Porto Seguro</em> (Tese, 2025). Autor: Ricardo Almeida Cunha. Orientador: Prof. Dr. Roberto Muhajir Rahnemay Rabbani. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1261967&key=418ba4ea05359a160810f264d745b000" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>A luta pela ressignificação dos quilombos: dos primórdios da resistência quilombola ao julgamento da ADI nº 3.239</em> (Tese, 2025). Autor: Jeferson Fernando Celos. Orientador: Prof. Dr. Roberto Muhajir Rahnemay Rabbani. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1325680&key=1c44fb8cfba3d98b13b430dce454e717" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="policy-card gold-accent">
+            <div class="policy-header">
+                <div class="policy-name">7. Enfrentamento da Violência Doméstica e Igualdade Racial</div>
+                <span class="policy-count-tag">Direito Antidiscriminatório</span>
+            </div>
+            <div class="policy-body">
+                Rotas críticas de atendimento na rede de acolhimento a mulheres vítimas de violência doméstica, assistência policial e judiciária a mulheres negras, e discriminação no acesso à seguridade social.
+            </div>
+            <div class="policy-examples">
+                <strong>Trabalhos Defendidos de Referência:</strong>
+                <ul>
+                    <li><em>Rotas críticas e a rede de atenção a mulheres em situação de violência doméstica e familiar em Porto Seguro, BA</em> (Dissertação, 2024). Autora: Luciane Minetto da Costa. Orientador: Prof. Dr. Rafael Andres Patino Orozco. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=1111069&key=06ed2e5d2edab93cc6eff93ac09fe25f" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>Intersecções entre a violência doméstica contra a mulher negra e as configurações afetivas no Sul da Bahia</em> (Dissertação, 2019). Autora: Eva Dayane Almeida de Goes. Orientadora: Profa. Dra. Maria Aparecida de Oliveira Lopes. <a href="https://sig.ufsb.edu.br/sigaa/verArquivo?idArquivo=380926&key=07ef146a3aaf84d488ef01c7913bf108" target="_blank" rel="noopener noreferrer">[Texto Integral]</a></li>
+                    <li><em>A discriminação racial da mulher negra no sistema previdenciário: análise crítica e o acesso à justiça</em> (Dissertação, 2024). Autora: Marta de Melo Lisboa. Orientadora: Profa. Dra. Maria Aparecida de Oliveira Lopes. [Em homologação]</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+""")
+
+# Section 4: Faculty
+out.append("""
+    <section class="section-block" id="sec-professores">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 4</span>
+            <h2 class="section-title">Corpo Docente, Currículos Lattes e Áreas de Orientação</h2>
+        </div>
+        <p>
+            O quadro abaixo cataloga os docentes permanentes e colaboradores do PPGES com aderência a temas jurídicos, institucionais e de governança pública. Estão destacados os links oficiais para a <strong>Plataforma Lattes do CNPq</strong>, as vagas disponíveis no <strong>Edital PROPPG nº 30/2026</strong>, a formação acadêmica e as diretrizes estratégicas para o anteprojeto de mestrado.
+        </p>
+
+        <div class="faculty-subheading">4.1. Docentes da Linha 1 (Estado, Instituições e Governança) — Núcleo Jurídico Principal</div>
+
+        <div class="faculty-grid">
+
+            <!-- Roberto Rabbani -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. Roberto Muhajir Rahnemay Rabbani</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Permanente (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado | 1 vaga Doutorado</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor e Mestre em Direito (UFBA). Docente permanente da UFSB com atuação nos programas de pós-graduação da UFS e UFBA.
+                    </div>
+                    <p class="faculty-desc">
+                        Pesquisa Teoria do Estado, Justiça Constitucional, Tributação Ambiental, Função Socioambiental da Propriedade e Pluralismo Jurídico. Orientou pesquisas sobre consórcios públicos em Coroa Vermelha, a ADI 3.239 (ressignificação dos quilombos), tributação ambiental e IPTU verde, governança indígena da água, subordinação jurídica no Uber e pluralismo jurídico camponês em Vale Verde.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Orientador prioritário para projetos que articulem direito tributário-ambiental, função social da posse/propriedade rural e conflitos territoriais com metodologia empírica no Sul da Bahia.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/8576195795981994" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Lattes Principal
+                        </a>
+                        <a href="http://lattes.cnpq.br/2287351005376845" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            Lattes Auxiliar
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('ROBERTO MUHAJIR RAHNEMAY RABBANI')">
+                            Ver 10 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">10 defesas concluídas no PPGES | 24 participações em bancas examinadoras</div>
+                </div>
+            </div>
+
+            <!-- Maria do Carmo Rebouças -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Maria do Carmo Rebouças</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Permanente (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 2 vagas Mestrado | 2 vagas Doutorado</span></div>
+                    <div><span class="faculty-cohort-badge">Orientações ativas em andamento no PPGES</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Desenvolvimento, Sociedade e Cooperação Internacional (UnB); Graduada em Direito. Ex-Pró-Reitora de Pesquisa e Pós-Graduação (PROPPG/UFSB).
+                    </div>
+                    <p class="faculty-desc">
+                        Atua em Direito Constitucional, Direitos Humanos Internacionais, Direito Antidiscriminatório, Pluralismo Jurídico e Relações Étnico-Raciais. Desenvolve pesquisas de ponta sobre igualdade substantiva, descolonização do saber jurídico e proteção a grupos historicamente vulnerabilizados.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Principal recomendação para projetos sobre acesso à justiça, antidiscriminação de raça e gênero, tratados internacionais de direitos humanos e crítica emancipatória ao positivismo jurídico estrito.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/3610248932250458" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('MARIA DO CARMO REBOUCAS')">
+                            Consultar turmas no acervo ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Maior oferta de vagas na Linha 1 no Edital 2026/2027 | Atuação destacada na governança universitária</div>
+                </div>
+            </div>
+
+            <!-- Carolina Bessa -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Carolina Bessa F. de Oliveira</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Permanente (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado | 1 vaga Doutorado</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Educação (USP); Mestre (UFU); Graduada em Direito e em Pedagogia; Especialista em Direitos Humanos.
+                    </div>
+                    <p class="faculty-desc">
+                        Investiga as relações estruturais entre Direitos Humanos, direitos sociais e desigualdades no sistema de justiça. Orientou a pesquisa sobre cotas raciais para ingresso na magistratura no Tribunal de Justiça da Bahia (Resolução CNJ nº 203/2015).
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Excelente interlocução para projetos que investiguem a dinâmica interna do Poder Judiciário, carreiras jurídicas, políticas afirmativas nas instituições de justiça e educação em prisões.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/4621783626179392" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('CAROLINA BESSA FERREIRA DE OLIVEIRA')">
+                            Ver defesa orientada (2026) ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Orientação pioneira sobre cotas no Judiciário baiano | Pesquisa sobre desigualdades institucionais</div>
+                </div>
+            </div>
+
+            <!-- Herbert Toledo Martins -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. Herbert Toledo Martins</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Colaborador (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Líder do Grupo de Pesquisa GPECS / CNPq</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor em Sociologia (UFRJ); Mestre e Graduado em Ciências Sociais (UFMG).
+                    </div>
+                    <p class="faculty-desc">
+                        Especialista em Sociologia Política e Sociologia do Direito, meios consensuais de resolução de conflitos (CEJUSCs), audiências de custódia, dinâmicas prisionais e administração de conflitos ambientais.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Referência para pesquisas empíricas sobre o funcionamento cotidiano de fóruns, audiências de custódia, centros de conciliação/mediação e práticas policiais no Extremo Sul baiano.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/7404757966009813" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('HERBERT TOLEDO MARTINS')">
+                            Ver 11 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">11 defesas concluídas no PPGES | 22 participações em bancas examinadoras</div>
+                </div>
+            </div>
+
+            <!-- Spensy Pimentel -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. Spensy Kmitta Pimentel</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Permanente (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado</span></div>
+                    <div><span class="faculty-cohort-badge">Orientações ativas em andamento no PPGES</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor em Antropologia Social (USP); Graduado em Jornalismo.
+                    </div>
+                    <p class="faculty-desc">
+                        Atua em Antropologia do Direito, Conflitos Fundiários e Demarcação de Terras Indígenas, Ecologia Política, Autonomias Comunitárias e Retomadas Territoriais. Analisa a interação entre laudos antropológicos, decisões judiciais e direitos territoriais originários.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Orientação recomendada para propostas que abordem direitos indígenas (Art. 231 da CF/88), teses do marco temporal, pluralismo jurídico tradicional e judicialização de conflitos possessórios.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/0323206925873394" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('SPENSY')">
+                            Consultar turmas no acervo ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Referência nacional em antropologia jurídica e direitos dos povos originários</div>
+                </div>
+            </div>
+
+            <!-- José André Ribeiro -->
+            <div class="faculty-card law-focus">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. José André Ribeiro</h3>
+                    </div>
+                    <span class="faculty-badge">Docente Permanente (Linha 1)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado</span></div>
+                    <div><span class="faculty-cohort-badge">Orientações ativas em andamento no PPGES</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor em Filosofia (UFC); Docente do IFBA Porto Seguro e permanente no PPGES.
+                    </div>
+                    <p class="faculty-desc">
+                        Pesquisa Ética, Teoria Democrática, Filosofia Política e as relações entre Estado, Tecnologia, Algoritmos e Novas Dinâmicas do Poder. Examina a governança digital e seus reflexos na esfera pública contemporânea.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Perfil indicado para anteprojetos que debatam governança digital, regulação de inteligência artificial pelo Estado, proteção de dados e transformações tecnológicas nas instituições públicas.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/2909888019684406" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('JOSE ANDRE RIBEIRO')">
+                            Consultar turmas no acervo ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Pesquisa em teoria democrática, ética e tecnologia na Linha 1</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="faculty-subheading">4.2. Docentes das Linhas 2, 3 e 4 com Interface em Políticas Públicas, Memória e Direitos</div>
+
+        <div class="faculty-grid">
+
+            <!-- Sandra Adriana -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Sandra Adriana Neves Nunes</h3>
+                    </div>
+                    <span class="faculty-badge">Políticas Sociais e Saúde (Linha 2)</span>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Saúde Pública (ISC/UFBA); Mestre em Saúde Coletiva; Graduada em Serviço Social.
+                    </div>
+                    <p class="faculty-desc">
+                        Coordena investigações sobre a rede do SUAS (CRAS e CREAS), controle social nos conselhos municipais, saúde de populações vulneráveis, assédio laboral e direitos sexuais/reprodutivos no SUS.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Interlocução estratégica para investigações sobre a eficácia de direitos sociais na ponta (SUAS, CREAS e CRAS), violência e assédio no trabalho de assistência social, direitos sexuais/reprodutivos e saúde coletiva no SUS regional.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/1233148620777469" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('SANDRA ADRIANA NEVES NUNES')">
+                            Ver 11 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">11 defesas concluídas no PPGES | 17 participações em bancas examinadoras</div>
+                </div>
+            </div>
+
+            <!-- Valéria Giannella -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Valéria Giannella</h3>
+                    </div>
+                    <span class="faculty-badge">Governança dos Comuns (Linha 2)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado | 2 vagas Doutorado</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Políticas Públicas do Território (IUAV de Veneza/Itália); Pós-Doutora pela UFBA.
+                    </div>
+                    <p class="faculty-desc">
+                        Trabalha com a abordagem sociocêntrica na análise de políticas públicas, governança de bens comuns hídricos, direitos das juventudes indígenas e redes de proteção a crianças e adolescentes.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Referência para pesquisas sobre a governança de bens comuns, gestão e conflitos em torno das águas no Sul da Bahia, participação comunitária e conselhos de direitos de crianças e adolescentes.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/2523004549190093" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('VALERIA GIANNELLA')">
+                            Ver 8 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">8 defesas concluídas no PPGES | 15 participações em bancas examinadoras</div>
+                </div>
+            </div>
+
+            <!-- Álamo Pimentel -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. Álamo Pimentel G. da Silva</h3>
+                    </div>
+                    <span class="faculty-badge">Educação e Sociedade (Linha 2)</span>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor em Educação (UFRGS); Pós-Doutor em Sociologia do Conhecimento (Universidade de Coimbra - CES).
+                    </div>
+                    <p class="faculty-desc">
+                        Desenvolve pesquisas sobre políticas educacionais, ações afirmativas, titulação de territórios quilombolas, educação popular e efetividade de direitos fundamentais para comunidades tradicionais.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Recomendado para propostas que articulem ações afirmativas, igualdade racial e étnica, direitos quilombolas e a efetivação de políticas educacionais no território baiano.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/5299277618123064" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('ALAMO PIMENTEL GONCALVES DA SILVA')">
+                            Ver 11 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">11 defesas concluídas no PPGES | 38 participações em bancas examinadoras</div>
+                </div>
+            </div>
+
+            <!-- Francisco Cancela -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Prof. Dr. Francisco Eduardo Torres Cancela</h3>
+                    </div>
+                    <span class="faculty-badge">Memória e Direitos Originários (Linha 4)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 2 vagas Mestrado | 2 vagas Doutorado</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutor em História Social do Brasil (UFBA); Professor Titular da UNEB e permanente no PPGES/UFSB.
+                    </div>
+                    <p class="faculty-desc">
+                        Especialista em História Indígena, Direitos Originários, Retomadas Territoriais e Decolonialidade. Orientou a pesquisa sobre a retomada Pataxó Aragwaksã no território do Monte Pascoal.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Docente de referência na Linha 4 para projetos em história indígena, direitos territoriais originários, demarcações de terras e confrontos jurídicos-históricos (como a retomada Pataxó Aragwaksã).
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/8498239058487526" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('FRANCISCO EDUARDO TORRES CANCELA')">
+                            Ver 4 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">4 defesas concluídas no PPGES | Pesquisador das resistências indígenas no Sul da Bahia</div>
+                </div>
+            </div>
+
+            <!-- Fernanda Lunkes -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Fernanda Luzia Lunkes</h3>
+                    </div>
+                    <span class="faculty-badge">Discurso Jurídico e Trabalho (Linha 3)</span>
+                    <div><span class="faculty-vagas-badge">Edital 2026: 1 vaga Mestrado | 1 vaga Doutorado</span></div>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Estudos de Linguagem (UFF); Mestre em Letras (UEM).
+                    </div>
+                    <p class="faculty-desc">
+                        Aplica a Análise do Discurso Materialista a textos jurídicos e jornalísticos, com foco em trabalho análogo à escravidão, violência institucional e silenciamentos nos discursos de Estado.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Recomendada na Linha 3 para projetos de interface entre Direito e Linguagem que apliquem a análise do discurso a processos judiciais, sentenças, termos de ajustamento de conduta (TAC) e discursos estatais sobre trabalho análogo à escravidão.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/4507366472893400" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('FERNANDA LUZIA LUNKES')">
+                            Ver defesa orientada (2026) ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Orientação de 2026 sobre trabalho análogo à escravidão e memória institucional</div>
+                </div>
+            </div>
+
+            <!-- Lilian Reichert Coelho -->
+            <div class="faculty-card">
+                <div>
+                    <div class="faculty-header-top">
+                        <h3 class="faculty-name">Profa. Dra. Lilian Reichert Coelho</h3>
+                    </div>
+                    <span class="faculty-badge">Cultura, Sociedade e Território (Linha 4)</span>
+                    <div class="faculty-training">
+                        <strong>Formação:</strong> Doutora em Letras (UFBA); Mestre (UNESP); Graduada em Jornalismo (UEL).
+                    </div>
+                    <p class="faculty-desc">
+                        Concentra o maior volume de orientações concluídas no PPGES (13 defesas). Analisa dinâmicas territoriais, conselhos municipais, narrativas contra-hegemônicas e redes produtivas comunitárias.
+                    </p>
+                    <div class="faculty-tip-box">
+                        <strong>Diretriz para Anteprojeto:</strong>
+                        Maior orientadora histórica do programa (13 defesas), com forte aderência a projetos sobre conselhos municipais, redes de economia solidária, trajetórias contra-hegemônicas e políticas públicas no Baixo Sul da Bahia.
+                    </div>
+                </div>
+                <div>
+                    <div class="faculty-actions">
+                        <a href="http://lattes.cnpq.br/9631991512840338" target="_blank" rel="noopener noreferrer" class="faculty-lattes-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Currículo Lattes
+                        </a>
+                        <button type="button" class="faculty-filter-btn" onclick="filtrarPorDocente('LILIAN REICHERT COELHO')">
+                            Ver 13 defesas orientadas ↓
+                        </button>
+                    </div>
+                    <div class="faculty-meta">Maior número de orientações defendidas na história do PPGES (13 defesas)</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="faculty-subheading">4.3. Quadro Geral dos 21 Orientadores e Histórico de Defesas (2019–2026)</div>
+        <p style="font-size: 14.5px; color: var(--text-secondary); margin-bottom: 12px;">
+            A tabela reúne a integralidade dos 21 professores que orientaram trabalhos concluídos no PPGES, categorizados pelo volume de dissertações e teses defendidas, com links de filtragem direta no acervo:
+        </p>
+
+        <div class="table-responsive">
+            <table class="academic-table" aria-label="Quadro geral dos 21 orientadores com histórico de defesas">
+                <thead>
+                    <tr>
+                        <th>Orientador(a)</th>
+                        <th class="center">Dissertações</th>
+                        <th class="center">Teses</th>
+                        <th class="center">Total</th>
+                        <th class="center">Ação Rápida</th>
+                    </tr>
+                </thead>
+                <tbody>
+""")
+
+# Compile 21 advisors data
+advisor_table_data = []
+for ori_name in sorted(advisor_counts.keys()):
+    ori_items = [d for d in catalog if d['orientador_clean'] == ori_name]
+    m_cnt = sum(1 for d in ori_items if 'mestrado' in d['nivel'].lower())
+    t_cnt = sum(1 for d in ori_items if 'doutorado' in d['nivel'].lower())
+    advisor_table_data.append((ori_name, m_cnt, t_cnt, len(ori_items)))
+
+# Sort by total descending, then name
+advisor_table_data.sort(key=lambda x: (-x[3], x[0]))
+
+for ori_name, m_cnt, t_cnt, tot_cnt in advisor_table_data:
+    out.append(f"""                    <tr>
+                        <td><strong>{html.escape(ori_name.title())}</strong></td>
+                        <td class="center">{m_cnt}</td>
+                        <td class="center">{t_cnt}</td>
+                        <td class="center"><strong>{tot_cnt}</strong></td>
+                        <td class="center">
+                            <button type="button" class="advisor-btn-link" onclick="filtrarPorDocente('{html.escape(ori_name)}')" title="Filtrar todas as {tot_cnt} defesas no acervo">
+                                Filtrar defesas ({tot_cnt})
+                            </button>
+                        </td>
+                    </tr>""")
+
+out.append(f"""                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><strong>TOTAL (21 Orientadores)</strong></td>
+                        <td class="center"><strong>{tot_m}</strong></td>
+                        <td class="center"><strong>{tot_t}</strong></td>
+                        <td class="center"><strong>{tot_all}</strong></td>
+                        <td class="center"><strong>151 defesas mapeadas</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </section>
+""")
+
+# Section 5: Catalog
+out.append("""
+    <section class="section-block" id="sec-catalogo">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 5</span>
+            <h2 class="section-title">Acervo Completo das 151 Dissertações e Teses (2019 a 2026)</h2>
+        </div>
+        <p>
+            O catálogo abaixo reúne todas as 151 pesquisas defendidas no PPGES da UFSB em ordem cronológica decrescente. Utilize o campo de busca com normalização fonética/ortográfica ou os filtros interativos para pesquisar por tema jurídico, conceito-chave, autor, orientador ou ano:
+        </p>
+
+        <!-- Controls Block -->
+        <div class="catalog-controls" role="search" aria-label="Controles de busca e filtro de defesas">
+            <div class="search-row">
+                <input type="text" id="searchInput" class="search-input" placeholder="Digite uma palavra-chave, conceito jurídico, autor ou orientador..." oninput="filtrarAcervo()" aria-label="Pesquisar defesas por palavra-chave ou nome">
+                <button type="button" id="searchClearBtn" class="search-clear-btn" onclick="limparBusca()" aria-label="Limpar termo de busca">✕</button>
+            </div>
+            
+            <div class="filter-row">
+                <span class="filter-group-label">Nível:</span>
+                <div class="filter-buttons" role="group" aria-label="Filtro por nível acadêmico">
+                    <button type="button" class="filter-btn active" data-tipo="todos" onclick="setFiltroTipo('todos', this)" aria-pressed="true">Todos (151)</button>
+                    <button type="button" class="filter-btn" data-tipo="dissertacao" onclick="setFiltroTipo('dissertacao', this)" aria-pressed="false">Dissertações (86)</button>
+                    <button type="button" class="filter-btn" data-tipo="tese" onclick="setFiltroTipo('tese', this)" aria-pressed="false">Teses (65)</button>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <span class="filter-group-label">Arquivo:</span>
+                <div class="filter-buttons" role="group" aria-label="Filtro por disponibilidade de arquivo">
+                    <button type="button" class="filter-btn active" data-pdf="todos" onclick="setFiltroPdf('todos', this)" aria-pressed="true">Todos (151)</button>
+                    <button type="button" class="filter-btn" data-pdf="com-pdf" onclick="setFiltroPdf('com-pdf', this)" aria-pressed="false">Com PDF (129)</button>
+                    <button type="button" class="filter-btn" data-pdf="homologacao" onclick="setFiltroPdf('homologacao', this)" aria-pressed="false">Em Homologação (22)</button>
+                </div>
+            </div>
+
+            <div class="filter-row" style="margin-bottom: 6px;">
+                <span class="filter-group-label">Seletores:</span>
+                <select id="yearSelect" class="filter-select" onchange="filtrarAcervo()" aria-label="Filtrar por ano de defesa">
+                    <option value="todos">Todos os Anos (2019–2026)</option>
+                    <option value="2026">Ano 2026 (18 defesas)</option>
+                    <option value="2025">Ano 2025 (18 defesas)</option>
+                    <option value="2024">Ano 2024 (17 defesas)</option>
+                    <option value="2023">Ano 2023 (26 defesas)</option>
+                    <option value="2022">Ano 2022 (24 defesas)</option>
+                    <option value="2021">Ano 2021 (22 defesas)</option>
+                    <option value="2020">Ano 2020 (13 defesas)</option>
+                    <option value="2019">Ano 2019 (13 defesas)</option>
+                </select>
+
+                <select id="advisorSelect" class="filter-select" onchange="filtrarAcervo()" aria-label="Filtrar por orientador(a)">
+                    <option value="todos">Todos os 21 Orientadores</option>
+""")
+
+for adv, cnt in sorted(advisor_counts.items(), key=lambda x: norm(x[0])):
+    out.append(f"""                    <option value="{html.escape(adv)}">{html.escape(adv.title())} ({cnt})</option>""")
+
+out.append("""                </select>
+            </div>
+
+            <div class="catalog-action-row">
+                <div class="catalog-counter" id="catalogCounter" aria-live="polite">
+                    Exibindo todas as 151 defesas cadastradas.
+                </div>
+                <div class="batch-actions">
+                    <button type="button" class="small-action-btn" onclick="toggleTodosResumos(true)">Expandir Resumos</button>
+                    <button type="button" class="small-action-btn" onclick="toggleTodosResumos(false)">Recolher Resumos</button>
+                    <button type="button" class="small-action-btn" onclick="resetarFiltros()">Limpar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="catalogListContainer">
+""")
+
+# Build Entries grouped by year
+for y in sorted(by_year.keys(), reverse=True):
+    items = by_year[y]
+    out.append(f"""            <div class="year-group" data-year="{y}">
+                <div class="catalog-year-header">
+                    <span>Ano Letivo {y}</span>
+                    <span class="year-count">{len(items)} defesas</span>
+                </div>
+""")
+    for item in items:
+        entry_id = item['id']
+        nivel = item['nivel']
+        tipo_code = "dissertacao" if "mestrado" in nivel.lower() else "tese"
+        nivel_label = f"Mestrado #{entry_id}" if tipo_code == "dissertacao" else f"Doutorado #{entry_id}"
+        badge_cls = "dissertacao" if tipo_code == "dissertacao" else "tese"
+        
+        has_pdf = bool(item.get('link_pdf') and item['link_pdf'].strip())
+        pdf_attr = "com-pdf" if has_pdf else "homologacao"
+        
+        data_text = item.get('data', f'Ano {y}')
+        autor = item.get('autor', '').strip()
+        titulo = item.get('titulo', '').strip()
+        orientador = item['orientador_clean']
+        clean_res = item['clean_resumo']
+        
+        # Build search attribute: normalized text containing all metadata tokens
+        search_blob = norm(f"{entry_id} {autor} {titulo} {orientador} {data_text} {y} {nivel} {clean_res}")
+        
+        # PDF link or status
+        if has_pdf:
+            pdf_html = f"""<a href="{html.escape(item['link_pdf'])}" target="_blank" rel="noopener noreferrer" class="pdf-link" title="Baixar texto integral em PDF no SIGAA">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Texto Integral (SIGAA)
+                        </a>"""
+        else:
+            pdf_html = """<span class="pdf-missing" title="Trabalho concluído cumprindo prazo regulamentar de entrega e homologação institucional">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Em homologação no SIGAA
+                        </span>"""
+        
+        # Summary details
+        resumo_html = ""
+        if clean_res:
+            resumo_html = f"""                    <details class="thesis-abstract-details">
+                        <summary>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            Ver resumo da pesquisa
+                        </summary>
+                        <div class="thesis-abstract-content">
+                            {html.escape(clean_res)}
+                        </div>
+                    </details>"""
+        
+        out.append(f"""                <div class="thesis-entry" data-tipo="{tipo_code}" data-pdf="{pdf_attr}" data-ano="{y}" data-orientador="{html.escape(orientador)}" data-search="{html.escape(search_blob)}">
+                    <div class="thesis-top-meta">
+                        <span class="type-badge {badge_cls}">{nivel_label}</span>
+                        <span class="thesis-date">{html.escape(data_text)}</span>
+                    </div>
+                    <div class="thesis-author">{html.escape(autor)}</div>
+                    <div class="thesis-title">{html.escape(titulo)}</div>
+                    <div class="thesis-bottom-meta">
+                        <div class="advisor-name">
+                            Orientador(a): <button type="button" class="advisor-btn-link" onclick="filtrarPorDocente('{html.escape(orientador)}')" title="Filtrar todas as defesas orientadas por {html.escape(orientador)}">{html.escape(orientador)}</button>
+                        </div>
+                        <div>{pdf_html}</div>
+                    </div>
+{resumo_html}
+                </div>""")
+        
+    out.append("""            </div>
+""")
+
+out.append("""        </div>
+
+        <div id="noResultsMsg" style="display: none; padding: 40px 20px; text-align: center; background: #FAF7F0; border-radius: 4px; margin-top: 20px; border: 1px solid var(--border-medium);">
+            <p id="noResultsTitle" style="font-family: var(--font-serif-title); font-size: 19px; color: var(--accent-wine); margin-bottom: 8px;">Nenhum trabalho localizado com os critérios informados.</p>
+            <p id="noResultsDesc" style="font-family: var(--font-sans); font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Tente utilizar termos mais genéricos ou clique no botão abaixo para redefinir os filtros.</p>
+            <button type="button" class="small-action-btn" onclick="resetarFiltros()" style="padding: 8px 16px; font-size: 13px; color: var(--accent-navy); border-color: var(--accent-navy);">Limpar Todos os Filtros</button>
+        </div>
+
+    </section>
+""")
+
+# Section 6: Guidelines
+out.append("""
+    <section class="section-block" id="sec-dicas">
+        <div class="section-header">
+            <span class="section-tag">Capítulo 6</span>
+            <h2 class="section-title">Diretrizes Técnicas para o Anteprojeto de Pesquisa</h2>
+        </div>
+        <p>
+            O exame exaustivo das 151 defesas e as disposições do <strong>Edital PROPPG nº 30/2026</strong> permitem consolidar diretrizes estratégicas e metodológicas indispensáveis para a candidatura de graduadas e graduados em Direito:
+        </p>
+        
+        <div class="guideline-card">
+            <strong class="guideline-title">1. Delimitação sociopolítica do problema (O Direito em Ação)</strong>
+            <p>
+                A proposta deve investigar os efeitos práticos do ordenamento jurídico nas relações sociais, na eficácia das políticas públicas e na garantia de direitos fundamentais. Anteprojetos dedicados exclusivamente à dogmática civil/constitucional abstrata ou à catalogação descontextualizada de jurisprudência colidem frontalmente com a proposta interdisciplinar do PPGES e são sistematicamente desaconselhados pela banca examinadora.
+            </p>
+        </div>
+
+        <div class="guideline-card navy">
+            <strong class="guideline-title">2. Articulação com a bibliografia obrigatória da Linha 1</strong>
+            <p>
+                O referencial teórico deve dialogar com as categorias dos autores recomendados no processo seletivo: governança democrática e arranjos jurídicos de políticas públicas (Brunet & Bucci), pluralismo jurídico e direitos socioambientais (Roberto Rabbani), e perspectivas decoloniais e contra-hegemônicas sobre a terra e o bem viver (Ailton Krenak).
+            </p>
+        </div>
+
+        <div class="guideline-card gold">
+            <strong class="guideline-title">3. Recorte territorial e empírico no Sul da Bahia</strong>
+            <p>
+                Mais de 80% dos trabalhos defendidos no programa elegem territórios do Sul e Extremo Sul baiano como campo empírico (Porto Seguro, Eunápolis, Teixeira de Freitas, Itamaraju, Ilhéus, Santa Cruz Cabrália, Coroa Vermelha ou Monte Pascoal). O projeto ganha robustez ao delimitar comarcas, varas judiciais, CEJUSCs, delegacias, conselhos tutelares ou comunidades tradicionais específicas.
+            </p>
+        </div>
+
+        <div class="guideline-card green">
+            <strong class="guideline-title">4. Alinhamento temático e estratégico às vagas dos orientadores</strong>
+            <p>
+                A candidata deve demonstrar convergência direta com a produção científica recente e as vagas do orientador pretendido na Linha 1. Se o foco for desigualdades no Judiciário e sistema de justiça, priorizar a Profa. Dra. Carolina Bessa ou a Profa. Dra. Maria do Carmo Rebouças; se o foco for propriedade rural, tributação e meio ambiente, convergir com o Prof. Dr. Roberto Rabbani; se envolver mediação e custódia, dialogar com o Prof. Dr. Herbert Toledo Martins; se versar sobre direitos originários e territorialidade indígena, articular com o Prof. Dr. Spensy Pimentel ou Prof. Dr. Francisco Cancela.
+            </p>
+        </div>
+
+        <div class="guardrail-alert" role="alert">
+            <h4>Limites Formais Rígidos e Vedações do Edital (PROPPG nº 30/2026)</h4>
+            <ul>
+                <li><strong>Extensão Máxima Rígida:</strong> O anteprojeto de mestrado é restrito a <strong>no máximo 7 laudas úteis</strong> de texto corrido (excluindo capa e referências bibliográficas). Extrapolar o limite de páginas gera perda imediata de pontos ou desclassificação formal.</li>
+                <li><strong>Vedação Absoluta à Quebra de Anonimato:</strong> O arquivo do anteprojeto <strong>NUNCA deve conter o nome da candidata</strong>, número de inscrição na OAB, menção a escritórios, cargos profissionais ou elementos biográficos que permitam identificar a autoria perante a comissão examinadora. A quebra de sigilo acarreta eliminação sumária do certame.</li>
+                <li><strong>Declaração de Integridade sobre Inteligência Artificial:</strong> O anteprojeto deve conter, em sua folha final, a declaração explícita de uso/não uso de ferramentas de inteligência artificial generativa, sob as penas de desclassificação, em cumprimento à Portaria CNPq nº 2.664/2026.</li>
+                <li><strong>Composição da Nota Final:</strong> O anteprojeto possui <strong>peso 0,3</strong> na média ponderada final: <code>MF = (Anteprojeto × 0,3) + (Prova Escrita × 0,2) + (Arguição Oral × 0,3) + (Currículo Lattes × 0,2)</code>. A nota mínima eliminatória é 7,0 por etapa.</li>
+            </ul>
+        </div>
+
+        <div class="table-responsive">
+            <table class="academic-table" aria-label="Matriz de alinhamento estratégico entre tema e orientador">
+                <thead>
+                    <tr>
+                        <th>Eixo Temático do Anteprojeto</th>
+                        <th>Orientador(a) Recomendado(a)</th>
+                        <th>Linha de Pesquisa</th>
+                        <th>Conceitos-Chave e Obras de Conexão</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Acesso à Justiça, Discriminação e Judiciário</strong></td>
+                        <td>Profa. Dra. Carolina Bessa / Profa. Dra. Maria do Carmo Rebouças</td>
+                        <td>Linha 1</td>
+                        <td>Res. 203/CNJ, igualdade substantiva, descolonização do direito, ações afirmativas na magistratura.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tributação Ambiental, Propriedade e Função Social</strong></td>
+                        <td>Prof. Dr. Roberto Muhajir Rahnemay Rabbani</td>
+                        <td>Linha 1</td>
+                        <td>Função socioambiental da propriedade rural, tributação ecológica, pluralismo jurídico, camponeses de Vale Verde.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Audiências de Custódia e Meios Consensuais (CEJUSCs)</strong></td>
+                        <td>Prof. Dr. Herbert Toledo Martins</td>
+                        <td>Colaborador / Linha 1</td>
+                        <td>Sociologia do direito, rotinas decisórias em flagrante, eficácia qualitativa da mediação em Teixeira de Freitas.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Conflitos Fundiários e Direitos Originários Indígenas</strong></td>
+                        <td>Prof. Dr. Spensy Pimentel / Prof. Dr. Francisco Cancela</td>
+                        <td>Linha 1 / Linha 4</td>
+                        <td>Art. 231 CF/88, retomadas territoriais Pataxó/Tupinambá, laudos antropológicos, decolonialidade.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trabalho Escravo Contemporâneo e Discurso de Estado</strong></td>
+                        <td>Profa. Dra. Fernanda Luzia Lunkes</td>
+                        <td>Linha 3</td>
+                        <td>Análise do discurso materialista, produção da norma trabalhista, violações estruturais de direitos fundamentais.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+""")
+
+# Footer
+out.append("""
+    <footer class="editorial-footer">
+        <p>
+            <strong>Universidade Federal do Sul da Bahia (UFSB)</strong> — Programa de Pós-Graduação em Estado e Sociedade (PPGES)<br>
+            Campus Sosígenes Costa — Rodovia Porto Seguro-Eunápolis, BR-367, Km 10, Porto Seguro/BA.<br>
+            Base documental: 151 defesas homologadas (2019–2026) | Dados consolidados para o Edital PROPPG nº 30/2026.
+        </p>
+    </footer>
+
+</div>
+
+<script>
+    // State
+    let filtroTipoAtual = 'todos';
+    let filtroPdfAtual = 'todos';
+
+    function normalizarTexto(str) {
+        if (!str) return '';
+        return str
+            .normalize('NFD')
+            .replace(/[\\u0300-\\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    function setFiltroTipo(tipo, btn) {
+        filtroTipoAtual = tipo;
+        document.querySelectorAll('.filter-btn[data-tipo]').forEach(b => {
+            const isActive = b.getAttribute('data-tipo') === tipo;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        filtrarAcervo();
+    }
+
+    function setFiltroPdf(pdfStatus, btn) {
+        filtroPdfAtual = pdfStatus;
+        document.querySelectorAll('.filter-btn[data-pdf]').forEach(b => {
+            const isActive = b.getAttribute('data-pdf') === pdfStatus;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        filtrarAcervo();
+    }
+
+    function limparBusca() {
+        const input = document.getElementById('searchInput');
+        input.value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        input.focus();
+        filtrarAcervo();
+    }
+
+    function resetarFiltros() {
+        filtroTipoAtual = 'todos';
+        filtroPdfAtual = 'todos';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        document.getElementById('yearSelect').value = 'todos';
+        document.getElementById('advisorSelect').value = 'todos';
+        
+        document.querySelectorAll('.filter-btn[data-tipo]').forEach(b => {
+            const isActive = b.getAttribute('data-tipo') === 'todos';
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        document.querySelectorAll('.filter-btn[data-pdf]').forEach(b => {
+            const isActive = b.getAttribute('data-pdf') === 'todos';
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        filtrarAcervo();
+    }
+
+    function filtrarPorDocente(nomeDocente) {
+        const advisorSelect = document.getElementById('advisorSelect');
+        const normTarget = normalizarTexto(nomeDocente);
+        
+        let foundVal = null;
+        for (let opt of advisorSelect.options) {
+            if (opt.value === 'todos') continue;
+            const normOpt = normalizarTexto(opt.value);
+            if (normOpt === normTarget || normOpt.includes(normTarget) || normTarget.includes(normOpt)) {
+                foundVal = opt.value;
+                break;
+            }
+        }
+        
+        // Reset type, pdf, year and search input
+        filtroTipoAtual = 'todos';
+        filtroPdfAtual = 'todos';
+        document.querySelectorAll('.filter-btn[data-tipo]').forEach(b => {
+            const isActive = b.getAttribute('data-tipo') === 'todos';
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        document.querySelectorAll('.filter-btn[data-pdf]').forEach(b => {
+            const isActive = b.getAttribute('data-pdf') === 'todos';
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        document.getElementById('yearSelect').value = 'todos';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+
+        const counter = document.getElementById('catalogCounter');
+        const noResults = document.getElementById('noResultsMsg');
+        const noResultsTitle = document.getElementById('noResultsTitle');
+        const noResultsDesc = document.getElementById('noResultsDesc');
+
+        if (foundVal) {
+            advisorSelect.value = foundVal;
+            filtrarAcervo();
+        } else {
+            // Professor without completed defenses in 2019-2026 catalog
+            advisorSelect.value = 'todos';
+            document.querySelectorAll('.thesis-entry').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.year-group').forEach(g => g.style.display = 'none');
+            
+            noResults.style.display = 'block';
+            noResultsTitle.innerText = 'Orientações Ativas em Andamento no PPGES';
+            noResultsDesc.innerHTML = 'O(A) docente <strong>' + nomeDocente + '</strong> atua na Linha 1 com vagas abertas no Edital PROPPG nº 30/2026. Suas primeiras turmas estão em andamento e suas pesquisas ainda não possuem defesas concluídas registradas no acervo histórico 2019–2026.';
+            counter.innerText = 'Docente com turmas em andamento no Edital 2026 (sem defesas históricas concluídas no acervo 2019–2026).';
+        }
+        
+        const secCatalogo = document.getElementById('sec-catalogo');
+        secCatalogo.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleTodosResumos(abrir) {
+        document.querySelectorAll('.thesis-entry').forEach(entry => {
+            if (entry.style.display !== 'none') {
+                const details = entry.querySelector('.thesis-abstract-details');
+                if (details) {
+                    details.open = abrir;
+                }
+            }
+        });
+    }
+
+    function filtrarAcervo() {
+        const rawQuery = document.getElementById('searchInput').value;
+        const normQuery = normalizarTexto(rawQuery);
+        const clearBtn = document.getElementById('searchClearBtn');
+        clearBtn.style.display = rawQuery.length > 0 ? 'block' : 'none';
+
+        // Tokenize query into separate words for flexible multi-word matching
+        const queryTokens = normQuery.split(/\\s+/).filter(Boolean);
+
+        const anoFiltro = document.getElementById('yearSelect').value;
+        const orientadorFiltro = document.getElementById('advisorSelect').value;
+        const normOrientadorFiltro = normalizarTexto(orientadorFiltro);
+
+        const entries = document.querySelectorAll('.thesis-entry');
+        let visiveis = 0;
+        let dissertacoesVisiveis = 0;
+        let tesesVisiveis = 0;
+
+        entries.forEach(entry => {
+            const entryTipo = entry.getAttribute('data-tipo');
+            const entryPdf = entry.getAttribute('data-pdf');
+            const entryAno = entry.getAttribute('data-ano');
+            const entryOrientador = entry.getAttribute('data-orientador') || '';
+            const normEntryOrientador = normalizarTexto(entryOrientador);
+            const searchData = entry.getAttribute('data-search') || '';
+
+            // Match conditions
+            const matchTipo = (filtroTipoAtual === 'todos') || (entryTipo === filtroTipoAtual);
+            const matchPdf = (filtroPdfAtual === 'todos') || (entryPdf === filtroPdfAtual);
+            const matchAno = (anoFiltro === 'todos') || (entryAno === anoFiltro);
+            const matchOrientador = (orientadorFiltro === 'todos') || (normEntryOrientador === normOrientadorFiltro);
+            
+            // All tokens must be present in searchData
+            const matchQuery = (queryTokens.length === 0) || queryTokens.every(token => searchData.includes(token));
+
+            if (matchTipo && matchPdf && matchAno && matchOrientador && matchQuery) {
+                entry.style.display = 'block';
+                visiveis++;
+                if (entryTipo === 'dissertacao') dissertacoesVisiveis++;
+                if (entryTipo === 'tese') tesesVisiveis++;
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+
+        // Toggle year headers
+        document.querySelectorAll('.year-group').forEach(group => {
+            const hasVisible = Array.from(group.querySelectorAll('.thesis-entry')).some(e => e.style.display !== 'none');
+            group.style.display = hasVisible ? 'block' : 'none';
+        });
+
+        // Counter text
+        const counter = document.getElementById('catalogCounter');
+        const noResults = document.getElementById('noResultsMsg');
+        const noResultsTitle = document.getElementById('noResultsTitle');
+        const noResultsDesc = document.getElementById('noResultsDesc');
+
+        if (visiveis === 0) {
+            noResults.style.display = 'block';
+            noResultsTitle.innerText = 'Nenhum trabalho localizado com os critérios informados.';
+            noResultsDesc.innerText = 'Tente utilizar termos mais genéricos ou clique no botão abaixo para redefinir os filtros.';
+            counter.innerText = 'Nenhum trabalho localizado com os critérios informados.';
+        } else {
+            noResults.style.display = 'none';
+            if (rawQuery === '' && filtroTipoAtual === 'todos' && filtroPdfAtual === 'todos' && anoFiltro === 'todos' && orientadorFiltro === 'todos') {
+                counter.innerText = 'Exibindo todas as 151 defesas cadastradas (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses).';
+            } else {
+                let partes = [];
+                if (filtroTipoAtual !== 'todos') partes.push(filtroTipoAtual === 'dissertacao' ? 'Dissertações' : 'Teses');
+                if (filtroPdfAtual !== 'todos') partes.push(filtroPdfAtual === 'com-pdf' ? 'Com PDF' : 'Em homologação');
+                if (anoFiltro !== 'todos') partes.push('Ano ' + anoFiltro);
+                if (orientadorFiltro !== 'todos') partes.push('Orientador(a): ' + orientadorFiltro);
+                if (rawQuery.trim() !== '') partes.push('Termo: "' + rawQuery.trim() + '"');
+
+                const pluralTrabalho = visiveis === 1 ? 'trabalho encontrado' : 'trabalhos encontrados';
+                counter.innerText = 'Exibindo ' + visiveis + ' ' + pluralTrabalho + ' (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses) [' + partes.join(', ') + '].';
+            }
+        }
+    }
+
+    // Scroll back to top behavior
+    window.addEventListener('scroll', function() {
+        const btn = document.getElementById('backToTopBtn');
+        if (window.scrollY > 400) {
+            btn.style.display = 'flex';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+
+    // Run initial counter setup
+    document.addEventListener('DOMContentLoaded', function() {
+        filtrarAcervo();
+    });
+</script>
+
+</body>
+</html>
+""")
+
+full_html = "".join(out)
+target_path = Path("panorama_defesas_ppges_ufsb.html")
+target_path.write_text(full_html, encoding="utf-8")
+print(f"Generated {target_path} successfully ({len(full_html)} chars, {len(full_html.encode('utf-8'))} bytes).")
+
+index_path = Path("index.html")
+index_path.write_text(full_html, encoding="utf-8")
+print(f"Mirrored to {index_path} successfully.")
