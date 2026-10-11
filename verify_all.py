@@ -9,12 +9,17 @@ print("=== INICIANDO BATERIA EXAUSTIVA DE TESTES E VERIFICAÇÃO ===")
 
 html_text = Path("panorama_defesas_ppges_ufsb.html").read_text(encoding="utf-8")
 soup = BeautifulSoup(html_text, "html.parser")
-catalog = json.load(open(r"C:\Users\Casa\.gemini\antigravity\brain\6738a72b-0664-43b4-b7b5-77b8a9c32ac0\scratch\catalog_defesas.json", encoding="utf-8"))
 
-# Test 1: Exactly 151 thesis entries
+local_json = Path(__file__).parent / "catalog_defesas.json"
+brain_json = Path(r"C:\Users\Casa\.gemini\antigravity\brain\6738a72b-0664-43b4-b7b5-77b8a9c32ac0\scratch\catalog_defesas.json")
+json_path = local_json if local_json.exists() else brain_json
+catalog = json.load(open(json_path, encoding="utf-8"))
+
+# Test 1: Exactly 151 thesis entries matching catalog JSON
 entries = soup.find_all("div", class_="thesis-entry")
 print(f"Test 1 - Total thesis entries: {len(entries)} (Esperado: 151)")
 assert len(entries) == 151, f"Expected 151, got {len(entries)}"
+assert len(entries) == len(catalog), f"HTML entries ({len(entries)}) does not match catalog ({len(catalog)})"
 
 # Test 2: Exactly 8 year groups
 year_groups = soup.find_all("div", class_="year-group")
@@ -165,9 +170,16 @@ for i, (exp_href, exp_title) in enumerate(expected_anchors):
     btn = quick_links[i]
     assert btn["href"] == exp_href, f"Button {i+1} href must be {exp_href}, got {btn['href']}"
     assert exp_title in btn.get_text(), f"Button {i+1} must contain '{exp_title}', got {btn.get_text()}"
-    # Verify no emojis
+    # Verify no emojis (comprehensive Unicode check)
     for ch in btn.get_text():
-        assert ord(ch) < 0x1F300 or ord(ch) > 0x1FAFF, f"Emoji detected in quick action button: {ch}"
+        code = ord(ch)
+        is_emoji = (
+            (0x2300 <= code <= 0x23FF) or
+            (0x2600 <= code <= 0x27BF) or
+            (0x2B00 <= code <= 0x2BFF) or
+            (0x1F000 <= code <= 0x1FAFF)
+        )
+        assert not is_emoji, f"Emoji/symbol detected in quick action button: {ch} (U+{code:04X})"
 print("Test 15b - All 4 Quick Action buttons verified (exact anchors, titles, no emojis): OK")
 
 # Test 16: Section #sec-cronograma (Cronograma Oficial e 5 etapas)
@@ -205,10 +217,16 @@ sec_dicas = soup.find("section", id="sec-dicas")
 assert sec_dicas is not None, "Section #sec-dicas must exist"
 checklist = sec_dicas.find("div", class_="compliance-checklist-card")
 assert checklist is not None, "Compliance checklist card must exist in #sec-dicas"
+assert checklist.get("id") == "sec-checklist", "Compliance checklist card must have id='sec-checklist'"
 
 checklist_items = checklist.find_all("div", class_="checklist-item")
 print(f"Test 17a - Checklist items count: {len(checklist_items)} (Esperado: 8)")
-assert len(checklist_items) >= 6, f"Expected at least 6 checklist items, got {len(checklist_items)}"
+assert len(checklist_items) == 8, f"Expected exactly 8 checklist items, got {len(checklist_items)}"
+
+for idx, item in enumerate(checklist_items, 1):
+    assert item.get("role") == "checkbox", f"Checklist item {idx} must have role='checkbox'"
+    assert item.get("tabindex") == "0", f"Checklist item {idx} must have tabindex='0'"
+    assert item.has_attr("aria-checked"), f"Checklist item {idx} must have aria-checked"
 
 chk_text = checklist.get_text()
 assert "7 laudas" in chk_text.lower() or "7 lauda" in chk_text.lower(), "Checklist must specify 7 laudas"
@@ -225,4 +243,11 @@ assert toc_box is not None, "TOC must exist"
 assert toc_box.find("a", href="#sec-cronograma") is not None, "TOC must link to #sec-cronograma"
 print("Test 18 - TOC links to #sec-cronograma: OK")
 
-print("\n>>> TODAS AS 18 VERIFICAÇÕES PASSARAM COM 100% DE SUCESSO! <<<")
+# Test 19: CSS Quality and Accessibility
+assert "scroll-behavior: smooth" in html_text, "CSS must specify scroll-behavior: smooth"
+assert "scroll-margin-top: 24px" in html_text, "CSS must specify scroll-margin-top on section blocks"
+assert ".quick-action-btn:focus-visible" in html_text, "CSS must specify focus-visible for quick action buttons"
+assert ".checklist-item.checked" in html_text, "CSS must provide checked state for checklist items"
+print("Test 19 - CSS smooth scrolling, scroll margins, and accessibility focus verified: OK")
+
+print("\n>>> TODAS AS 19 VERIFICAÇÕES PASSARAM COM 100% DE SUCESSO! <<<")

@@ -8,7 +8,16 @@ from pathlib import Path
 from collections import Counter, defaultdict
 
 # Load catalog data
-json_path = Path(r"C:\Users\Casa\.gemini\antigravity\brain\6738a72b-0664-43b4-b7b5-77b8a9c32ac0\scratch\catalog_defesas.json")
+local_json = Path(__file__).parent / "catalog_defesas.json"
+brain_json = Path(r"C:\Users\Casa\.gemini\antigravity\brain\6738a72b-0664-43b4-b7b5-77b8a9c32ac0\scratch\catalog_defesas.json")
+
+if local_json.exists():
+    json_path = local_json
+elif brain_json.exists():
+    json_path = brain_json
+else:
+    raise FileNotFoundError("catalog_defesas.json not found in repository or brain cache.")
+
 catalog = json.load(open(json_path, encoding="utf-8"))
 
 def norm(s):
@@ -150,6 +159,16 @@ out.append("""<!DOCTYPE html>
             --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             
             --measure: 890px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
         }
 
         * {
@@ -352,6 +371,16 @@ out.append("""<!DOCTYPE html>
             text-decoration: none;
         }
 
+        .quick-action-btn:focus,
+        .quick-action-btn:focus-visible {
+            outline: 2px solid var(--accent-wine);
+            outline-offset: 2px;
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+            text-decoration: none;
+        }
+
         .quick-action-btn .btn-subtitle {
             display: block;
             font-size: 11px;
@@ -362,7 +391,9 @@ out.append("""<!DOCTYPE html>
             letter-spacing: 0.5px;
         }
 
-        .quick-action-btn:hover .btn-subtitle {
+        .quick-action-btn:hover .btn-subtitle,
+        .quick-action-btn:focus .btn-subtitle,
+        .quick-action-btn:focus-visible .btn-subtitle {
             color: #E2E8F0;
         }
 
@@ -465,7 +496,13 @@ out.append("""<!DOCTYPE html>
         @media (max-width: 680px) {
             .timeline-step-card {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 12px;
+            }
+            .step-badge-col {
+                text-align: left;
+            }
+            .step-meta-col {
+                text-align: left;
             }
         }
 
@@ -581,6 +618,12 @@ out.append("""<!DOCTYPE html>
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
+        @media (max-width: 600px) {
+            .compliance-checklist-card {
+                padding: 16px 14px;
+            }
+        }
+
         .compliance-checklist-header {
             border-bottom: 2px solid var(--accent-wine);
             padding-bottom: 10px;
@@ -616,6 +659,31 @@ out.append("""<!DOCTYPE html>
             display: flex;
             align-items: flex-start;
             gap: 14px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .checklist-item:hover {
+            border-color: var(--accent-navy);
+            background: #FFFFFF;
+        }
+
+        .checklist-item:focus,
+        .checklist-item:focus-visible {
+            outline: 2px solid var(--accent-wine);
+            outline-offset: 2px;
+        }
+
+        .checklist-item.checked {
+            background: #F4FBF6;
+            border-color: #A3D9B5;
+        }
+
+        .checklist-item.checked .checklist-indicator {
+            background: #1E6B39;
+            border-color: #1E6B39;
+            color: #FFFFFF;
         }
 
         .checklist-indicator {
@@ -731,6 +799,7 @@ out.append("""<!DOCTYPE html>
         /* Section layout */
         .section-block {
             margin-bottom: 48px;
+            scroll-margin-top: 24px;
         }
 
         .section-header {
@@ -2832,13 +2901,13 @@ out.append("""
             </ul>
         </div>
 
-        <div class="compliance-checklist-card">
+        <div class="compliance-checklist-card" id="sec-checklist">
             <div class="compliance-checklist-header">
                 <h3>Checklist de Conformidade Pré-Submissão do Anteprojeto</h3>
                 <p>Verificação item a item antes do upload definitivo no SIGAA / UFSB (Edital PROPPG nº 30/2026):</p>
             </div>
             <div class="checklist-grid">
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="1. Limite Máximo Rígido de Extensão: até 7 laudas úteis">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2853,7 +2922,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="2. Anonimato Absoluto no Corpo do Texto">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2868,7 +2937,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="3. Higienização de Metadados do Arquivo PDF">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2883,7 +2952,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="4. Declaração de Integridade sobre Inteligência Artificial: Portaria CNPq nº 2.664/2026">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2898,7 +2967,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="5. Indicação de 2 Opções de Orientadores da Linha 1">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2913,7 +2982,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="6. Formatação Gráfica e Padrões Técnicos ABNT NBR 6023 em PDF">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2928,7 +2997,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="7. Ancoragem Territorial e Epistemológica no Sul da Bahia">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -2943,7 +3012,7 @@ out.append("""
                     </div>
                 </div>
 
-                <div class="checklist-item">
+                <div class="checklist-item" tabindex="0" role="checkbox" aria-checked="false" aria-label="8. Diálogo com a Bibliografia Obrigatória da Linha 1">
                     <div class="checklist-indicator">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
@@ -3240,9 +3309,23 @@ out.append("""
         }
     });
 
-    // Run initial counter setup
+    // Run initial setup and checklist interactions
     document.addEventListener('DOMContentLoaded', function() {
         filtrarAcervo();
+        
+        document.querySelectorAll('.checklist-item').forEach(function(item) {
+            function toggleItem() {
+                const isChecked = item.classList.toggle('checked');
+                item.setAttribute('aria-checked', isChecked ? 'true' : 'false');
+            }
+            item.addEventListener('click', toggleItem);
+            item.addEventListener('keydown', function(e) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    toggleItem();
+                }
+            });
+        });
     });
 </script>
 
