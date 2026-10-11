@@ -1894,6 +1894,186 @@ out.append("""<!DOCTYPE html>
             transform: translateY(-2px);
         }
 
+        /* Sticky Main Tabs Navigation Bar */
+        .main-tabs-sticky-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid var(--border-medium);
+            border-top: 3px solid var(--accent-navy);
+            border-radius: 6px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 10px 14px;
+            margin: 20px 0 28px 0;
+            backdrop-filter: blur(8px);
+        }
+
+        @media (max-width: 860px) {
+            .main-tabs-sticky-bar {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                padding: 8px;
+            }
+        }
+
+        .main-tab-nav-btn {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.18s ease;
+            text-align: left;
+            font-family: var(--font-sans);
+        }
+
+        .main-tab-nav-btn:hover {
+            border-color: var(--accent-navy);
+            background: #EDE8DE;
+        }
+
+        .main-tab-nav-btn.active {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+            box-shadow: 0 2px 8px rgba(27, 54, 93, 0.25);
+        }
+
+        .main-tab-nav-btn .tab-pill-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #EBF1F8;
+            color: var(--accent-navy);
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .main-tab-nav-btn.active .tab-pill-badge {
+            background: var(--accent-gold);
+            color: #1A1A1A;
+        }
+
+        .main-tab-nav-btn .tab-text-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .main-tab-nav-btn .tab-main-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            line-height: 1.25;
+        }
+
+        .main-tab-nav-btn.active .tab-main-title {
+            color: #FFFFFF;
+        }
+
+        .main-tab-nav-btn .tab-sub-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        .main-tab-nav-btn.active .tab-sub-title {
+            color: #DFE8F4;
+        }
+
+        /* Tab Panes */
+        .main-tab-pane {
+            animation: fadeInTab 0.2s ease-in-out;
+        }
+
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Catalog Pagination Controls */
+        .catalog-pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 18px 0;
+            padding: 12px 16px;
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .pg-btn {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 3px;
+            padding: 6px 11px;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent-navy);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .pg-btn:hover:not(:disabled) {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+        }
+
+        .pg-btn.active {
+            background: var(--accent-wine);
+            color: #FFFFFF;
+            border-color: var(--accent-wine);
+        }
+
+        .pg-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pagination-meta {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-select {
+            padding: 4px 8px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            border: 1px solid var(--border-medium);
+            border-radius: 3px;
+            background: #FFFFFF;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
         .print-bar {
             display: flex;
             justify-content: space-between;
@@ -2002,19 +2182,19 @@ out.append("""<!DOCTYPE html>
     </header>
 
     <nav class="quick-actions-bar" aria-label="Ações Rápidas">
-        <a href="#sec-cronograma" class="quick-action-btn">
+        <a href="#sec-cronograma" class="quick-action-btn" onclick="navegarAbaPrincipal('cronograma', 'sec-cronograma'); return false;">
             <span>Cronograma e Prazos do Edital</span>
             <span class="btn-subtitle">Inscrições e 5 Etapas</span>
         </a>
-        <a href="#sec-dicas" class="quick-action-btn">
+        <a href="#sec-dicas" class="quick-action-btn" onclick="navegarAbaPrincipal('dicas', 'sec-dicas'); return false;">
             <span>Regras Formais do Anteprojeto</span>
             <span class="btn-subtitle">Checklist e Vedações</span>
         </a>
-        <a href="#sec-professores" class="quick-action-btn">
+        <a href="#sec-professores" class="quick-action-btn" onclick="navegarAbaPrincipal('professores', 'sec-professores'); return false;">
             <span>Docentes e Vagas da Linha 1</span>
             <span class="btn-subtitle">Perfis e Orientações</span>
         </a>
-        <a href="#sec-catalogo" class="quick-action-btn">
+        <a href="#sec-catalogo" class="quick-action-btn" onclick="navegarAbaPrincipal('catalogo', 'sec-catalogo'); return false;">
             <span>Catálogo de Defesas com Busca</span>
             <span class="btn-subtitle">151 Trabalhos e PDFs</span>
         </a>
@@ -2029,6 +2209,41 @@ out.append("""<!DOCTYPE html>
             A graduação em Direito possui aderência prioritária à <strong>Linha 1 (Estado, Instituições e Governança)</strong>. O programa privilegia o exame empírico das normas constitucionais, da atuação dos órgãos de justiça e segurança pública, e dos conflitos distributivos na região Sul e Extremo Sul da Bahia, rejeitando abordagens puramente dogmáticas ou exegéticas desprovidas de ancoragem sociopolítica e territorial.
         </p>
     </div>
+
+    <!-- Barra Fixa de Abas Principais (Sticky Navigation Bar) -->
+    <nav id="mainTabsNav" class="main-tabs-sticky-bar" role="tablist" aria-label="Navegação em Abas do Portal">
+        <button type="button" id="tabBtn-cronograma" class="main-tab-nav-btn active" role="tab" aria-selected="true" aria-controls="pane-cronograma" onclick="navegarAbaPrincipal('cronograma')">
+            <span class="tab-pill-badge">1</span>
+            <span class="tab-text-wrap">
+                <span class="tab-main-title">Edital &amp; Cronograma</span>
+                <span class="tab-sub-title">Etapas, prazos e dados</span>
+            </span>
+        </button>
+        <button type="button" id="tabBtn-professores" class="main-tab-nav-btn" role="tab" aria-selected="false" aria-controls="pane-professores" onclick="navegarAbaPrincipal('professores')">
+            <span class="tab-pill-badge">2</span>
+            <span class="tab-text-wrap">
+                <span class="tab-main-title">Docentes &amp; Vagas</span>
+                <span class="tab-sub-title">Linha 1, Lattes e perfis</span>
+            </span>
+        </button>
+        <button type="button" id="tabBtn-catalogo" class="main-tab-nav-btn" role="tab" aria-selected="false" aria-controls="pane-catalogo" onclick="navegarAbaPrincipal('catalogo')">
+            <span class="tab-pill-badge">3</span>
+            <span class="tab-text-wrap">
+                <span class="tab-main-title">Catálogo de Defesas</span>
+                <span class="tab-sub-title">151 pesquisas com páginas</span>
+            </span>
+        </button>
+        <button type="button" id="tabBtn-dicas" class="main-tab-nav-btn" role="tab" aria-selected="false" aria-controls="pane-dicas" onclick="navegarAbaPrincipal('dicas')">
+            <span class="tab-pill-badge">4</span>
+            <span class="tab-text-wrap">
+                <span class="tab-main-title">Oficina de Anteprojeto</span>
+                <span class="tab-sub-title">Checklist 7 laudas e propostas</span>
+            </span>
+        </button>
+    </nav>
+
+    <!-- Aba 1: Edital, Cronograma, Enquadramento e Políticas -->
+    <div id="pane-cronograma" class="main-tab-pane active" role="tabpanel" aria-labelledby="tabBtn-cronograma">
 
     <section class="section-block" id="sec-cronograma">
         <div class="section-header">
@@ -2479,10 +2694,11 @@ out.append("""
             </div>
         </div>
     </section>
-""")
+    </div> <!-- /pane-cronograma -->
 
-# Section 4: Faculty
-out.append("""
+    <!-- Aba 2: Docentes e Vagas da Linha 1 -->
+    <div id="pane-professores" class="main-tab-pane" style="display: none;" role="tabpanel" aria-labelledby="tabBtn-professores">
+
     <section class="section-block" id="sec-professores">
         <div class="section-header">
             <span class="section-tag">Capítulo 4</span>
@@ -2977,10 +3193,11 @@ out.append(f"""                </tbody>
         </div>
 
     </section>
-""")
+    </div> <!-- /pane-professores -->
 
-# Section 5: Catalog
-out.append("""
+    <!-- Aba 3: Catálogo de Defesas -->
+    <div id="pane-catalogo" class="main-tab-pane" style="display: none;" role="tabpanel" aria-labelledby="tabBtn-catalogo">
+
     <section class="section-block" id="sec-catalogo">
         <div class="section-header">
             <span class="section-tag">Capítulo 5</span>
@@ -3050,6 +3267,9 @@ out.append("""                </select>
                 </div>
             </div>
         </div>
+
+        <!-- Barra de Paginação Superior -->
+        <div class="catalog-pagination-bar" id="paginationBarTop"></div>
 
         <div id="catalogListContainer">
 """)
@@ -3128,6 +3348,9 @@ for y in sorted(by_year.keys(), reverse=True):
 
 out.append("""        </div>
 
+        <!-- Barra de Paginação Inferior -->
+        <div class="catalog-pagination-bar" id="paginationBarBottom"></div>
+
         <div id="noResultsMsg" style="display: none; padding: 40px 20px; text-align: center; background: #FAF7F0; border-radius: 4px; margin-top: 20px; border: 1px solid var(--border-medium);">
             <p id="noResultsTitle" style="font-family: var(--font-serif-title); font-size: 19px; color: var(--accent-wine); margin-bottom: 8px;">Nenhum trabalho localizado com os critérios informados.</p>
             <p id="noResultsDesc" style="font-family: var(--font-sans); font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Tente utilizar termos mais genéricos ou clique no botão abaixo para redefinir os filtros.</p>
@@ -3135,10 +3358,11 @@ out.append("""        </div>
         </div>
 
     </section>
-""")
+    </div> <!-- /pane-catalogo -->
 
-# Section 6: Guidelines
-out.append("""
+    <!-- Aba 4: Regras Formais e Oficina de Anteprojeto -->
+    <div id="pane-dicas" class="main-tab-pane" style="display: none;" role="tabpanel" aria-labelledby="tabBtn-dicas">
+
     <section class="section-block" id="sec-dicas">
         <div class="section-header">
             <span class="section-tag">Capítulo 6</span>
@@ -3537,6 +3761,7 @@ out.append("""
         </div>
 
     </section>
+    </div> <!-- /pane-dicas -->
 """)
 
 # Footer
@@ -3555,6 +3780,23 @@ out.append("""
     // State
     let filtroTipoAtual = 'todos';
     let filtroPdfAtual = 'todos';
+    let paginaAtual = 1;
+    let itensPorPagina = 12;
+    let resultadosFiltrados = [];
+
+    // Mapeamento semântico de âncoras para abas
+    const MAPA_ANCHORS_TAB = {
+        'sec-cronograma': 'cronograma',
+        'sec-encontro': 'cronograma',
+        'sec-estatisticas': 'cronograma',
+        'sec-politicas': 'cronograma',
+        'sec-professores': 'professores',
+        'sec-catalogo': 'catalogo',
+        'sec-dicas': 'dicas',
+        'sec-checklist': 'dicas',
+        'sec-propostas-habitacao': 'dicas',
+        'sec-propostas': 'dicas'
+    };
 
     function normalizarTexto(str) {
         if (!str) return '';
@@ -3565,6 +3807,47 @@ out.append("""
             .trim();
     }
 
+    function navegarAbaPrincipal(tabName, subTargetId, atualizarHash = true) {
+        const tabsValidas = ['cronograma', 'professores', 'catalogo', 'dicas'];
+        if (!tabsValidas.includes(tabName)) {
+            tabName = 'cronograma';
+        }
+
+        // Alternar visibilidade dos painéis de conteúdo
+        tabsValidas.forEach(t => {
+            const pane = document.getElementById('pane-' + t);
+            const btn = document.getElementById('tabBtn-' + t);
+            const ativo = (t === tabName);
+            if (pane) {
+                pane.style.display = ativo ? 'block' : 'none';
+                pane.classList.toggle('active', ativo);
+            }
+            if (btn) {
+                btn.classList.toggle('active', ativo);
+                btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+            }
+        });
+
+        // Rolagem e Hash
+        if (subTargetId) {
+            const el = document.getElementById(subTargetId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            if (atualizarHash && history.replaceState) {
+                history.replaceState(null, '', '#' + subTargetId);
+            }
+        } else {
+            const navBar = document.getElementById('mainTabsNav');
+            if (navBar && window.scrollY > navBar.offsetTop) {
+                navBar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            if (atualizarHash && history.replaceState) {
+                history.replaceState(null, '', '#pane-' + tabName);
+            }
+        }
+    }
+
     function setFiltroTipo(tipo, btn) {
         filtroTipoAtual = tipo;
         document.querySelectorAll('.filter-btn[data-tipo]').forEach(b => {
@@ -3572,7 +3855,7 @@ out.append("""
             b.classList.toggle('active', isActive);
             b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
-        filtrarAcervo();
+        filtrarAcervo(true);
     }
 
     function setFiltroPdf(pdfStatus, btn) {
@@ -3582,7 +3865,7 @@ out.append("""
             b.classList.toggle('active', isActive);
             b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
-        filtrarAcervo();
+        filtrarAcervo(true);
     }
 
     function limparBusca() {
@@ -3590,7 +3873,7 @@ out.append("""
         input.value = '';
         document.getElementById('searchClearBtn').style.display = 'none';
         input.focus();
-        filtrarAcervo();
+        filtrarAcervo(true);
     }
 
     function resetarFiltros() {
@@ -3612,10 +3895,13 @@ out.append("""
             b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
 
-        filtrarAcervo();
+        filtrarAcervo(true);
     }
 
     function filtrarPorDocente(nomeDocente) {
+        // Redireciona para a Aba 3 (Catálogo)
+        navegarAbaPrincipal('catalogo', 'sec-catalogo', false);
+
         const advisorSelect = document.getElementById('advisorSelect');
         const normTarget = normalizarTexto(nomeDocente);
         
@@ -3653,12 +3939,14 @@ out.append("""
 
         if (foundVal) {
             advisorSelect.value = foundVal;
-            filtrarAcervo();
+            filtrarAcervo(true);
         } else {
             // Professor without completed defenses in 2019-2026 catalog
             advisorSelect.value = 'todos';
+            resultadosFiltrados = [];
             document.querySelectorAll('.thesis-entry').forEach(e => e.style.display = 'none');
             document.querySelectorAll('.year-group').forEach(g => g.style.display = 'none');
+            renderizarControlesPaginacao(0);
             
             noResults.style.display = 'block';
             noResultsTitle.innerText = 'Orientações Ativas em Andamento no PPGES';
@@ -3667,7 +3955,9 @@ out.append("""
         }
         
         const secCatalogo = document.getElementById('sec-catalogo');
-        secCatalogo.scrollIntoView({ behavior: 'smooth' });
+        if (secCatalogo) {
+            secCatalogo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     function toggleTodosResumos(abrir) {
@@ -3681,11 +3971,15 @@ out.append("""
         });
     }
 
-    function filtrarAcervo() {
+    function filtrarAcervo(resetarPagina = true) {
+        if (resetarPagina) {
+            paginaAtual = 1;
+        }
+
         const rawQuery = document.getElementById('searchInput').value;
         const normQuery = normalizarTexto(rawQuery);
         const clearBtn = document.getElementById('searchClearBtn');
-        clearBtn.style.display = rawQuery.length > 0 ? 'block' : 'none';
+        if (clearBtn) clearBtn.style.display = rawQuery.length > 0 ? 'block' : 'none';
 
         // Tokenize query into separate words for flexible multi-word matching
         const queryTokens = normQuery.split(/\\s+/).filter(Boolean);
@@ -3695,7 +3989,7 @@ out.append("""
         const normOrientadorFiltro = normalizarTexto(orientadorFiltro);
 
         const entries = document.querySelectorAll('.thesis-entry');
-        let visiveis = 0;
+        resultadosFiltrados = [];
         let dissertacoesVisiveis = 0;
         let tesesVisiveis = 0;
 
@@ -3717,8 +4011,7 @@ out.append("""
             const matchQuery = (queryTokens.length === 0) || queryTokens.every(token => searchData.includes(token));
 
             if (matchTipo && matchPdf && matchAno && matchOrientador && matchQuery) {
-                entry.style.display = 'block';
-                visiveis++;
+                resultadosFiltrados.push(entry);
                 if (entryTipo === 'dissertacao') dissertacoesVisiveis++;
                 if (entryTipo === 'tese') tesesVisiveis++;
             } else {
@@ -3726,41 +4019,181 @@ out.append("""
             }
         });
 
-        // Toggle year headers
-        document.querySelectorAll('.year-group').forEach(group => {
-            const hasVisible = Array.from(group.querySelectorAll('.thesis-entry')).some(e => e.style.display !== 'none');
-            group.style.display = hasVisible ? 'block' : 'none';
-        });
-
-        // Counter text
+        const total = resultadosFiltrados.length;
         const counter = document.getElementById('catalogCounter');
         const noResults = document.getElementById('noResultsMsg');
         const noResultsTitle = document.getElementById('noResultsTitle');
         const noResultsDesc = document.getElementById('noResultsDesc');
 
-        if (visiveis === 0) {
-            noResults.style.display = 'block';
-            noResultsTitle.innerText = 'Nenhum trabalho localizado com os critérios informados.';
-            noResultsDesc.innerText = 'Tente utilizar termos mais genéricos ou clique no botão abaixo para redefinir os filtros.';
-            counter.innerText = 'Nenhum trabalho localizado com os critérios informados.';
+        if (total === 0) {
+            if (noResults) {
+                noResults.style.display = 'block';
+                noResultsTitle.innerText = 'Nenhum trabalho localizado com os critérios informados.';
+                noResultsDesc.innerText = 'Tente utilizar termos mais genéricos ou clique no botão abaixo para redefinir os filtros.';
+            }
+            if (counter) counter.innerText = 'Nenhum trabalho localizado com os critérios informados.';
         } else {
-            noResults.style.display = 'none';
-            if (rawQuery === '' && filtroTipoAtual === 'todos' && filtroPdfAtual === 'todos' && anoFiltro === 'todos' && orientadorFiltro === 'todos') {
-                counter.innerText = 'Exibindo todas as 151 defesas cadastradas (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses).';
-            } else {
-                let partes = [];
-                if (filtroTipoAtual !== 'todos') partes.push(filtroTipoAtual === 'dissertacao' ? 'Dissertações' : 'Teses');
-                if (filtroPdfAtual !== 'todos') partes.push(filtroPdfAtual === 'com-pdf' ? 'Com PDF' : 'Em homologação');
-                if (anoFiltro !== 'todos') partes.push('Ano ' + anoFiltro);
-                if (orientadorFiltro !== 'todos') partes.push('Orientador(a): ' + orientadorFiltro);
-                if (rawQuery.trim() !== '') partes.push('Termo: "' + rawQuery.trim() + '"');
+            if (noResults) noResults.style.display = 'none';
+            if (counter) {
+                if (rawQuery === '' && filtroTipoAtual === 'todos' && filtroPdfAtual === 'todos' && anoFiltro === 'todos' && orientadorFiltro === 'todos') {
+                    counter.innerText = 'Exibindo todas as 151 defesas cadastradas (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses).';
+                } else {
+                    let partes = [];
+                    if (filtroTipoAtual !== 'todos') partes.push(filtroTipoAtual === 'dissertacao' ? 'Dissertações' : 'Teses');
+                    if (filtroPdfAtual !== 'todos') partes.push(filtroPdfAtual === 'com-pdf' ? 'Com PDF' : 'Em homologação');
+                    if (anoFiltro !== 'todos') partes.push('Ano ' + anoFiltro);
+                    if (orientadorFiltro !== 'todos') partes.push('Orientador(a): ' + orientadorFiltro);
+                    if (rawQuery.trim() !== '') partes.push('Termo: "' + rawQuery.trim() + '"');
 
-                const pluralTrabalho = visiveis === 1 ? 'trabalho encontrado' : 'trabalhos encontrados';
-                counter.innerText = 'Exibindo ' + visiveis + ' ' + pluralTrabalho + ' (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses) [' + partes.join(', ') + '].';
+                    const pluralTrabalho = total === 1 ? 'trabalho encontrado' : 'trabalhos encontrados';
+                    counter.innerText = 'Exibindo ' + total + ' ' + pluralTrabalho + ' (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses) [' + partes.join(', ') + '].';
+                }
             }
         }
+
+        aplicarPaginacaoVisivel();
+    }
+
+    function aplicarPaginacaoVisivel() {
+        const total = resultadosFiltrados.length;
+
+        if (total === 0) {
+            document.querySelectorAll('.year-group').forEach(g => g.style.display = 'none');
+            renderizarControlesPaginacao(0);
+            return;
+        }
+
+        let inicioIdx = 0;
+        let fimIdx = total;
+
+        if (itensPorPagina !== 'todas') {
+            const limite = parseInt(itensPorPagina, 10);
+            const totalPaginas = Math.ceil(total / limite);
+            if (paginaAtual > totalPaginas) {
+                paginaAtual = totalPaginas;
+            }
+            if (paginaAtual < 1) {
+                paginaAtual = 1;
+            }
+            inicioIdx = (paginaAtual - 1) * limite;
+            fimIdx = Math.min(inicioIdx + limite, total);
+        }
+
+        resultadosFiltrados.forEach((entry, idx) => {
+            if (idx >= inicioIdx && idx < fimIdx) {
+                entry.style.display = 'block';
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+
+        // Alterna cabeçalhos de ano de acordo com a visibilidade dos cards filhos na página ativa
+        document.querySelectorAll('.year-group').forEach(group => {
+            const hasVisible = Array.from(group.querySelectorAll('.thesis-entry')).some(e => e.style.display !== 'none');
+            group.style.display = hasVisible ? 'block' : 'none';
+        });
+
+        renderizarControlesPaginacao(total);
+    }
+
+    function renderizarControlesPaginacao(total) {
+        const topBar = document.getElementById('paginationBarTop');
+        const bottomBar = document.getElementById('paginationBarBottom');
+        if (!topBar && !bottomBar) return;
+
+        if (total === 0) {
+            if (topBar) { topBar.innerHTML = ''; topBar.style.display = 'none'; }
+            if (bottomBar) { bottomBar.innerHTML = ''; bottomBar.style.display = 'none'; }
+            return;
+        }
+
+        let totalPaginas = 1;
+        let inicioNum = 1;
+        let fimNum = total;
+
+        if (itensPorPagina !== 'todas') {
+            const limite = parseInt(itensPorPagina, 10);
+            totalPaginas = Math.ceil(total / limite);
+            inicioNum = (paginaAtual - 1) * limite + 1;
+            fimNum = Math.min(paginaAtual * limite, total);
+        }
+
+        let paginasHtml = '';
+        if (totalPaginas > 1) {
+            const desabAnt = paginaAtual === 1 ? ' disabled' : '';
+            paginasHtml += '<button type="button" class="pg-btn prev-btn"' + desabAnt + ' onclick="mudarPagina(' + (paginaAtual - 1) + ')" aria-label="Página anterior">« Anterior</button>';
+
+            let paginasParaMostrar = [];
+            if (totalPaginas <= 7) {
+                for (let p = 1; p <= totalPaginas; p++) paginasParaMostrar.push(p);
+            } else {
+                paginasParaMostrar.push(1);
+                if (paginaAtual > 3) paginasParaMostrar.push('...');
+                const inicioMeio = Math.max(2, paginaAtual - 1);
+                const fimMeio = Math.min(totalPaginas - 1, paginaAtual + 1);
+                for (let p = inicioMeio; p <= fimMeio; p++) {
+                    if (!paginasParaMostrar.includes(p)) paginasParaMostrar.push(p);
+                }
+                if (paginaAtual < totalPaginas - 2) paginasParaMostrar.push('...');
+                if (!paginasParaMostrar.includes(totalPaginas)) paginasParaMostrar.push(totalPaginas);
+            }
+
+            paginasParaMostrar.forEach(p => {
+                if (p === '...') {
+                    paginasHtml += '<span style="padding: 4px 6px; color: var(--text-secondary); font-size: 13px;">…</span>';
+                } else {
+                    const ativo = (p === paginaAtual) ? ' active' : '';
+                    paginasHtml += '<button type="button" class="pg-btn' + ativo + '" onclick="mudarPagina(' + p + ')" aria-label="Ir para página ' + p + '">' + p + '</button>';
+                }
+            });
+
+            const desabProx = paginaAtual === totalPaginas ? ' disabled' : '';
+            paginasHtml += '<button type="button" class="pg-btn next-btn"' + desabProx + ' onclick="mudarPagina(' + (paginaAtual + 1) + ')" aria-label="Próxima página">Próxima »</button>';
+        }
+
+        const opcoesItens = [12, 24, 48, 'todas'];
+        let seletorItensHtml = '<span style="font-size: 12.5px; color: var(--text-secondary); font-weight: 600;">Por página:</span> ';
+        opcoesItens.forEach(opt => {
+            const isCurrent = (opt === itensPorPagina || (opt === 'todas' && itensPorPagina === 'todas') || (opt.toString() === itensPorPagina.toString()));
+            const btnClass = isCurrent ? 'pg-btn active' : 'pg-btn';
+            const label = (opt === 'todas') ? 'Todas' : opt;
+            seletorItensHtml += '<button type="button" class="' + btnClass + '" style="min-width: 32px; padding: 4px 8px; font-size: 12px;" onclick="alterarItensPorPagina(\\'' + opt + '\\')">' + label + '</button> ';
+        });
+
+        const metaHtml = 'Mostrando <strong>' + inicioNum + '–' + fimNum + '</strong> de <strong>' + total + '</strong> defesas';
+
+        const htmlCompleto = '' +
+            '<div class="pagination-meta">' + metaHtml + '</div>' +
+            '<div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">' + seletorItensHtml + '</div>' +
+            '<div class="pagination-buttons" role="navigation" aria-label="Paginação do catálogo">' + paginasHtml + '</div>';
+
+        if (topBar) {
+            topBar.innerHTML = htmlCompleto;
+            topBar.style.display = 'flex';
+        }
+        if (bottomBar) {
+            bottomBar.innerHTML = htmlCompleto;
+            bottomBar.style.display = 'flex';
+        }
+    }
+
+    function mudarPagina(novaPagina) {
+        paginaAtual = novaPagina;
+        aplicarPaginacaoVisivel();
+        const secCatalogo = document.getElementById('sec-catalogo');
+        if (secCatalogo) {
+            secCatalogo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function alterarItensPorPagina(qtd) {
+        itensPorPagina = (qtd === 'todas') ? 'todas' : parseInt(qtd, 10);
+        paginaAtual = 1;
+        aplicarPaginacaoVisivel();
+    }
     // Alternar e exibir proposta habitacional selecionada
     function selecionarOpcaoHabitacional(num) {
+        navegarAbaPrincipal('dicas', 'sec-propostas-habitacao', false);
         for (let i = 1; i <= 3; i++) {
             const tab = document.getElementById('tab-opcao-' + i);
             const panel = document.getElementById('painel-opcao-' + i);
@@ -3870,16 +4303,52 @@ out.append("""
     // Scroll back to top behavior
     window.addEventListener('scroll', function() {
         const btn = document.getElementById('backToTopBtn');
-        if (window.scrollY > 400) {
-            btn.style.display = 'flex';
-        } else {
-            btn.style.display = 'none';
+        if (btn) {
+            if (window.scrollY > 400) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
         }
     });
 
+    // Sincronização por Hash da URL
+    function sincronizarAbaPorHash() {
+        const rawHash = window.location.hash ? window.location.hash.substring(1) : '';
+        if (!rawHash) {
+            navegarAbaPrincipal('cronograma', null, false);
+            return;
+        }
+
+        if (rawHash.startsWith('pane-')) {
+            const tabName = rawHash.replace('pane-', '');
+            navegarAbaPrincipal(tabName, null, false);
+            return;
+        }
+
+        const tabMapeada = MAPA_ANCHORS_TAB[rawHash];
+        if (tabMapeada) {
+            navegarAbaPrincipal(tabMapeada, rawHash, false);
+        } else {
+            const targetEl = document.getElementById(rawHash);
+            if (targetEl) {
+                const panePai = targetEl.closest('.main-tab-pane');
+                if (panePai && panePai.id.startsWith('pane-')) {
+                    const tabNome = panePai.id.replace('pane-', '');
+                    navegarAbaPrincipal(tabNome, rawHash, false);
+                    return;
+                }
+            }
+            navegarAbaPrincipal('cronograma', null, false);
+        }
+    }
+
+    window.addEventListener('hashchange', sincronizarAbaPorHash);
+
     // Run initial setup and checklist interactions
     document.addEventListener('DOMContentLoaded', function() {
-        filtrarAcervo();
+        sincronizarAbaPorHash();
+        filtrarAcervo(true);
         
         document.querySelectorAll('.checklist-item').forEach(function(item) {
             function toggleItem() {
@@ -3891,6 +4360,21 @@ out.append("""
                 if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
                     toggleItem();
+                }
+            });
+        });
+
+        // Intercepta cliques nos links do Sumário (TOC) para alternar abas dinamicamente
+        document.querySelectorAll('.toc-list a').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const targetHref = link.getAttribute('href');
+                if (targetHref && targetHref.startsWith('#')) {
+                    const targetId = targetHref.substring(1);
+                    const tab = MAPA_ANCHORS_TAB[targetId];
+                    if (tab) {
+                        e.preventDefault();
+                        navegarAbaPrincipal(tab, targetId, true);
+                    }
                 }
             });
         });
