@@ -1174,6 +1174,274 @@ out.append("""<!DOCTYPE html>
             margin-top: 6px;
         }
 
+        /* Housing Proposal Buttons in Faculty Card */
+        .faculty-housing-proposals-box {
+            background: #F8F5EE;
+            border: 1px solid var(--border-medium);
+            border-left: 3px solid var(--accent-wine);
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin-top: 10px;
+        }
+
+        .faculty-housing-label {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-wine);
+            margin-bottom: 6px;
+        }
+
+        .faculty-housing-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .faculty-prop-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 3px;
+            padding: 6px 10px;
+            font-family: var(--font-sans);
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--accent-navy);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .faculty-prop-btn:hover {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+        }
+
+        /* Housing Proposals Section */
+        .housing-proposals-container {
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: 6px;
+            padding: 24px;
+            margin: 28px 0;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.03);
+        }
+
+        .housing-header {
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 14px;
+        }
+
+        .housing-tag {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #FDF3E7;
+            color: #92540D;
+            border: 1px solid #F5D3A6;
+            margin-bottom: 8px;
+        }
+
+        .housing-title {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            color: var(--accent-navy);
+            margin: 4px 0 8px 0;
+            line-height: 1.35;
+        }
+
+        .housing-subtitle {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .housing-tabs-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 820px) {
+            .housing-tabs-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .housing-tab-btn {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-medium);
+            border-radius: 4px;
+            padding: 12px 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .housing-tab-btn:hover {
+            border-color: var(--accent-navy);
+            background: #F0EDE4;
+        }
+
+        .housing-tab-btn.active {
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border-color: var(--accent-navy);
+            box-shadow: 0 2px 6px rgba(27, 54, 93, 0.25);
+        }
+
+        .housing-tab-btn .tab-num {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-wine);
+        }
+
+        .housing-tab-btn.active .tab-num {
+            color: var(--accent-gold);
+        }
+
+        .housing-tab-btn .tab-label {
+            font-family: var(--font-serif);
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--accent-navy);
+        }
+
+        .housing-tab-btn.active .tab-label {
+            color: #FFFFFF;
+        }
+
+        .housing-option-panel {
+            background: #FAFAF7;
+            border: 1px solid var(--border-light);
+            border-left: 4px solid var(--accent-wine);
+            border-radius: 4px;
+            padding: 22px;
+        }
+
+        .option-badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .option-meta-badge {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #EBF1F8;
+            color: var(--accent-navy);
+        }
+
+        .option-meta-badge.gold {
+            background: #FDF3E7;
+            color: #92540D;
+        }
+
+        .option-meta-badge.wine {
+            background: #F9EBF5;
+            color: var(--accent-wine);
+        }
+
+        .option-title-text {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-navy);
+            margin: 0 0 16px 0;
+            line-height: 1.4;
+        }
+
+        .option-grid-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 820px) {
+            .option-grid-fields {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-field {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 12px 14px;
+        }
+
+        .option-field.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .option-field-label {
+            display: block;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent-wine);
+            margin-bottom: 6px;
+        }
+
+        .option-field-content {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .option-copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent-navy);
+            color: #FFFFFF;
+            border: 1px solid var(--accent-navy);
+            border-radius: 4px;
+            padding: 9px 16px;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .option-copy-btn:hover {
+            background: #12243F;
+            border-color: #12243F;
+        }
+
         /* Catalog Search and Filter Controls */
         .catalog-controls {
             background: var(--bg-card-subtle);
@@ -2294,6 +2562,23 @@ out.append("""
                             Consultar turmas no acervo ↓
                         </button>
                     </div>
+                    <div class="faculty-housing-proposals-box">
+                        <span class="faculty-housing-label">Propostas de Políticas Habitacionais (Linha 1):</span>
+                        <div class="faculty-housing-btns">
+                            <button type="button" class="faculty-prop-btn" onclick="selecionarOpcaoHabitacional(1)">
+                                <span>Opção 1: REURB-S Baianão (DPE/BA)</span>
+                                <span>↓</span>
+                            </button>
+                            <button type="button" class="faculty-prop-btn" onclick="selecionarOpcaoHabitacional(2)">
+                                <span>Opção 2: Mediação TJBA &amp; CIDH (Trancoso)</span>
+                                <span>↓</span>
+                            </button>
+                            <button type="button" class="faculty-prop-btn" onclick="selecionarOpcaoHabitacional(3)">
+                                <span>Opção 3: REURB-E vs. REURB-S na Orla</span>
+                                <span>↓</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="faculty-meta">Maior oferta de vagas na Linha 1 no Edital 2026/2027 | Atuação destacada na governança universitária</div>
                 </div>
             </div>
@@ -3029,6 +3314,183 @@ out.append("""
             </div>
         </div>
 
+        <!-- Painel Interativo de Propostas de Políticas Habitacionais - Profa. Dra. Maria do Carmo Rebouças -->
+        <div id="sec-propostas-habitacao" class="housing-proposals-container" style="scroll-margin-top: 28px;">
+            <div class="housing-header">
+                <span class="housing-tag">Linha 1 — Estado, Instituições e Governança | Profa. Dra. Maria do Carmo Rebouças</span>
+                <h3 class="housing-title">Dossiê de Propostas de Anteprojeto: Políticas Habitacionais e Direito à Cidade</h3>
+                <p class="housing-subtitle">
+                    Estruturação metodológica e empírica fundamentada nas dinâmicas territoriais do Extremo Sul da Bahia, nos relatórios da Comissão Regional de Soluções Fundiárias do TJBA (Decreto Judiciário nº 367/2024), na atuação da Defensoria Pública da Bahia (Projeto Solo Cidadão) e na execução municipal da REURB (Lei nº 13.465/2017). Selecione uma das 3 opções abaixo:
+                </p>
+            </div>
+
+            <!-- Botões das 3 Opções -->
+            <div class="housing-tabs-bar" role="tablist" aria-label="Seletor de Propostas Habitacionais">
+                <button type="button" id="tab-opcao-1" class="housing-tab-btn active" role="tab" aria-selected="true" aria-controls="painel-opcao-1" onclick="selecionarOpcaoHabitacional(1)">
+                    <span class="tab-num">Opção 1</span>
+                    <span class="tab-label">REURB-S no Baianão (DPE/BA)</span>
+                </button>
+                <button type="button" id="tab-opcao-2" class="housing-tab-btn" role="tab" aria-selected="false" aria-controls="painel-opcao-2" onclick="selecionarOpcaoHabitacional(2)">
+                    <span class="tab-num">Opção 2</span>
+                    <span class="tab-label">Mediação TJBA &amp; CIDH (Trancoso)</span>
+                </button>
+                <button type="button" id="tab-opcao-3" class="housing-tab-btn" role="tab" aria-selected="false" aria-controls="painel-opcao-3" onclick="selecionarOpcaoHabitacional(3)">
+                    <span class="tab-num">Opção 3</span>
+                    <span class="tab-label">REURB-E vs. REURB-S na Orla</span>
+                </button>
+            </div>
+
+            <!-- Painel Opção 1 -->
+            <div id="painel-opcao-1" class="housing-option-panel" role="tabpanel" aria-labelledby="tab-opcao-1">
+                <div class="option-badge-row">
+                    <span class="option-meta-badge">Linha 1: Estado, Instituições e Governança</span>
+                    <span class="option-meta-badge gold">Orientadora: Profa. Dra. Maria do Carmo Rebouças (2 vagas)</span>
+                    <span class="option-meta-badge wine">Foco: REURB-S e Direito à Cidade</span>
+                </div>
+                <h4 class="option-title-text">
+                    Entre o Título Registral e a Integração Urbana: Arranjos Institucionais da REURB-S no Complexo Baianão e a Garantia do Direito à Cidade em Porto Seguro
+                </h4>
+                <div class="option-grid-fields">
+                    <div class="option-field">
+                        <span class="option-field-label">Problema de Pesquisa</span>
+                        <p class="option-field-content">
+                            Em que medida os arranjos institucionais do programa municipal "Esta Casa é Minha" (Lei nº 13.465/2017) nos oito subnúcleos do Complexo Frei Calixto (Baianão) asseguram a integração urbanística e ambiental plena recomendada pelo projeto "Solo Cidadão" da DPE/BA, superando a mera regularização cartorária e mitigando o racismo ambiental?
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Hipótese de Trabalho</span>
+                        <p class="option-field-content">
+                            A política municipal de regularização confere segurança jurídica registral individual (titulação formal), mas apresenta gargalos de coordenação intergovernamental na entrega de saneamento, contenção de encostas e equipamentos sociais, perpetuando a vulnerabilidade socioambiental e a segregação racial da maior periferia da Costa do Descobrimento.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Objeto Empírico &amp; Campo</span>
+                        <p class="option-field-content">
+                            Processos de REURB-S na Secretaria Municipal de Habitação e Regularização Fundiária (SEHAB) de Porto Seguro nos subnúcleos do Baianão (Mercado do Povo, Areial, Casas Novas, etc.); atuação da Defensoria Pública da Bahia (DPE/BA) pelo projeto "Solo Cidadão"; e Inquéritos Civis da Promotoria de Habitação e Urbanismo do MPBA.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Marco Teórico &amp; Edital</span>
+                        <p class="option-field-content">
+                            <strong>Maria Paula Dallari Bucci:</strong> Arranjos institucionais e capacidades estatais em políticas públicas territoriais.<br>
+                            <strong>Maria do Carmo Rebouças:</strong> Teoria crítica dos direitos humanos, direito antidiscriminatório e Observatório ODS 18.<br>
+                            <strong>Ailton Krenak:</strong> Crítica ontológica à mercantilização do solo e aos modos de habitar.
+                        </p>
+                    </div>
+                    <div class="option-field full-width">
+                        <span class="option-field-label">Metodologia e Procedimentos (24 meses)</span>
+                        <p class="option-field-content">
+                            Abordagem qualitativa com pesquisa documental em decretos, certidões de regularização fundiária (CRFs) e relatórios socioeconômicos da SEHAB; análise de dados cartorários de títulos emitidos; análise de conteúdo dos TACs do MPBA; e entrevistas semiestruturadas com gestores da SEHAB, defensores públicos da comarca e lideranças comunitárias dos bairros Areial e Mercado do Povo.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" id="btn-copiar-1" class="option-copy-btn" onclick="copiarDossie(1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copiar Dossiê Completo da Opção 1
+                </button>
+            </div>
+
+            <!-- Painel Opção 2 -->
+            <div id="painel-opcao-2" class="housing-option-panel" style="display:none;" role="tabpanel" aria-labelledby="tab-opcao-2">
+                <div class="option-badge-row">
+                    <span class="option-meta-badge">Linha 1: Estado, Instituições e Governança</span>
+                    <span class="option-meta-badge gold">Orientadora: Profa. Dra. Maria do Carmo Rebouças (2 vagas)</span>
+                    <span class="option-meta-badge wine">Foco: Sistema de Justiça e Parâmetros Interamericanos</span>
+                </div>
+                <h4 class="option-title-text">
+                    Mediação Judicial de Conflitos Fundiários Urbanos e Controle de Convencionalidade: A Atuação da Comissão Regional de Soluções Fundiárias do TJBA no Extremo Sul da Bahia
+                </h4>
+                <div class="option-grid-fields">
+                    <div class="option-field">
+                        <span class="option-field-label">Problema de Pesquisa</span>
+                        <p class="option-field-content">
+                            Como a Comissão Regional de Soluções Fundiárias do TJBA (Resolução CNJ nº 510/2023 e Decreto Judiciário nº 367/2024) tem articulado os parâmetros internacionais de direitos humanos sobre a proibição de despejos forçados arbitrários nas visitas técnicas e processos de mediação de ocupações coletivas urbanas nas comarcas de Porto Seguro e Eunápolis?
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Hipótese de Trabalho</span>
+                        <p class="option-field-content">
+                            Embora as "Caravanas Regionais" do TJBA promovam mediação qualificada que evita reintegrações violentas imediatas, o sistema de justiça local enfrenta barreiras para efetivar soluções habitacionais perenes, decorrentes da carência de áreas públicas reservadas para habitação de interesse social nos municípios da região.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Objeto Empírico &amp; Campo</span>
+                        <p class="option-field-content">
+                            Relatórios técnicos e atas de mediação da Comissão Regional de Soluções Fundiárias (CRSF/TJBA) nas comarcas polo, com ênfase nas visitas à área central de Trancoso (agosto/2026) e ao assentamento Baixa Verde em Eunápolis; atuação conjunta com a DPE/BA, CEAMA/MPBA e comissões do CNJ.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Marco Teórico &amp; Edital</span>
+                        <p class="option-field-content">
+                            <strong>Maria do Carmo Rebouças:</strong> Controle de convencionalidade, Sistema Interamericano de Direitos Humanos (SIDH/OEA) e grupo de pesquisa "Usos Emancipatórios do Direito".<br>
+                            <strong>Maria Paula Dallari Bucci:</strong> O Judiciário como ator de arranjos institucionais multinível.<br>
+                            <strong>Roberto Rabbani:</strong> A primazia da posse coletiva para moradia frente ao direito formal de propriedade.
+                        </p>
+                    </div>
+                    <div class="option-field full-width">
+                        <span class="option-field-label">Metodologia e Procedimentos (24 meses)</span>
+                        <p class="option-field-content">
+                            Estudo de casos múltiplos comparativos (ocupação central de Trancoso vs. ocupação Baixa Verde/Eunápolis). Análise documental dos autos no PJe do TJBA e das atas da CRSF; levantamento de decisões à luz dos precedentes da Corte IDH e do Comitê DESC; entrevistas com magistrados da comissão fundiária e defensores públicos estaduais.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" id="btn-copiar-2" class="option-copy-btn" onclick="copiarDossie(2)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h6"></path></svg>
+                    Copiar Dossiê Completo da Opção 2
+                </button>
+            </div>
+
+            <!-- Painel Opção 3 -->
+            <div id="painel-opcao-3" class="housing-option-panel" style="display:none;" role="tabpanel" aria-labelledby="tab-opcao-3">
+                <div class="option-badge-row">
+                    <span class="option-meta-badge">Linha 1: Estado, Instituições e Governança</span>
+                    <span class="option-meta-badge gold">Orientadora: Profa. Dra. Maria do Carmo Rebouças (2 vagas)</span>
+                    <span class="option-meta-badge wine">Foco: Gentrificação, REURB-E vs. REURB-S</span>
+                </div>
+                <h4 class="option-title-text">
+                    A Dupla Face da Regularização Fundiária na Costa do Descobrimento: Assimetrias Institucionais entre a REURB-Específica e a REURB-Social sob a Perspectiva do Direito Antidiscriminatório
+                </h4>
+                <div class="option-grid-fields">
+                    <div class="option-field">
+                        <span class="option-field-label">Problema de Pesquisa</span>
+                        <p class="option-field-content">
+                            De que forma a aplicação concomitante da REURB-E (voltada a ocupações de média e alta renda e empreendimentos turísticos) e da REURB-S (voltada a populações vulneráveis) pela gestão municipal de Porto Seguro expressa uma distribuição assimétrica de recursos institucionais, favorecendo a gentrificação dos distritos costeiros de Trancoso e Arraial d'Ajuda?
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Hipótese de Trabalho</span>
+                        <p class="option-field-content">
+                            A celeridade dos procedimentos de REURB-E — impulsionada pelo mercado imobiliário turístico — contrasta com a morosidade e precariedade técnica da REURB-S nas áreas periféricas e nas comunidades tradicionais costeiras, consolidando um padrão de "justiça urbanística de duas velocidades" incompatível com o direito antidiscriminatório e com a função social da posse.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Objeto Empírico &amp; Campo</span>
+                        <p class="option-field-content">
+                            Decretos de instauração e certidões de REURB publicados no Diário Oficial de Porto Seguro (2020–2026), confrontando a tramitação em Trancoso (Pindorama, Xandó, centro) e Arraial d'Ajuda com o Complexo Baianão; autos de Ações Civis Públicas e representações do MPBA e DPE/BA sobre empresas privadas de regularização.
+                        </p>
+                    </div>
+                    <div class="option-field">
+                        <span class="option-field-label">Marco Teórico &amp; Edital</span>
+                        <p class="option-field-content">
+                            <strong>Maria do Carmo Rebouças:</strong> Projeto de pesquisa "Estudos Críticos do Constitucionalismo e do Desenvolvimento", racismo institucional e pluralismo contra-hegemônico.<br>
+                            <strong>Maria Paula Dallari Bucci:</strong> Arranjos regulatórios urbanos e risco de captura corporativa das agências estatais.<br>
+                            <strong>Ailton Krenak:</strong> A expropriação predatória de territórios comunitários pela economia de consumo turístico.
+                        </p>
+                    </div>
+                    <div class="option-field full-width">
+                        <span class="option-field-label">Metodologia e Procedimentos (24 meses)</span>
+                        <p class="option-field-content">
+                            Mapeamento quanti-qualitativo de prazos de tramitação via Diário Oficial de Porto Seguro; análise da matriz contratual de empresas privadas credenciadas; exame de inquéritos civis do MPBA; e entrevistas com membros do CONCIDADE e moradores tradicionais de Trancoso.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" id="btn-copiar-3" class="option-copy-btn" onclick="copiarDossie(3)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h6"></path></svg>
+                    Copiar Dossiê Completo da Opção 3
+                </button>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="academic-table" aria-label="Matriz de alinhamento estratégico entre tema e orientador">
                 <thead>
@@ -3296,6 +3758,112 @@ out.append("""
                 const pluralTrabalho = visiveis === 1 ? 'trabalho encontrado' : 'trabalhos encontrados';
                 counter.innerText = 'Exibindo ' + visiveis + ' ' + pluralTrabalho + ' (' + dissertacoesVisiveis + ' dissertações e ' + tesesVisiveis + ' teses) [' + partes.join(', ') + '].';
             }
+        }
+    // Alternar e exibir proposta habitacional selecionada
+    function selecionarOpcaoHabitacional(num) {
+        for (let i = 1; i <= 3; i++) {
+            const tab = document.getElementById('tab-opcao-' + i);
+            const panel = document.getElementById('painel-opcao-' + i);
+            if (tab && panel) {
+                if (i === num) {
+                    tab.classList.add('active');
+                    tab.setAttribute('aria-selected', 'true');
+                    panel.style.display = 'block';
+                    panel.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    tab.setAttribute('aria-selected', 'false');
+                    panel.style.display = 'none';
+                    panel.classList.remove('active');
+                }
+            }
+        }
+        const target = document.getElementById('sec-propostas-habitacao');
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Copiar dossie completo da proposta para a area de transferencia
+    function copiarDossie(opcaoNum) {
+        let texto = "";
+        if (opcaoNum === 1) {
+            texto = "ANTEPROJETO DE PESQUISA (PPGES/UFSB - EDITAL PROPPG Nº 30/2026)\n" +
+                    "Linha 1: Estado, Instituições e Governança\n" +
+                    "Orientadora Pretendida: Profa. Dra. Maria do Carmo Rebouças da Cruz Ferreira dos Santos\n\n" +
+                    "TÍTULO PRELIMINAR:\n" +
+                    "Entre o Título Registral e a Integração Urbana: Arranjos Institucionais da REURB-S no Complexo Baianão e a Garantia do Direito à Cidade em Porto Seguro\n\n" +
+                    "PROBLEMA DE PESQUISA:\n" +
+                    "Em que medida os arranjos institucionais do programa municipal 'Esta Casa é Minha' (Lei nº 13.465/2017) nos oito subnúcleos do Complexo Frei Calixto (Baianão) asseguram a integração urbanística e ambiental plena recomendada pelo projeto 'Solo Cidadão' da DPE/BA, superando a mera regularização cartorária e mitigando o racismo ambiental?\n\n" +
+                    "HIPÓTESE DE TRABALHO:\n" +
+                    "A política municipal de regularização confere segurança jurídica registral individual (titulação formal), mas apresenta gargalos de coordenação intergovernamental na entrega de saneamento, contenção de encostas e equipamentos sociais, perpetuando a vulnerabilidade socioambiental e a segregação racial da maior periferia da Costa do Descobrimento.\n\n" +
+                    "OBJETO EMPÍRICO E RECORTE:\n" +
+                    "Processos administrativos de REURB-S na SEHAB de Porto Seguro no Complexo Baianão (Mercado do Povo, Areial, Casas Novas, etc.); atuação da DPE/BA pelo projeto 'Solo Cidadão'; e Inquéritos Civis da Promotoria de Habitação e Urbanismo do MPBA.\n\n" +
+                    "MARCO TEÓRICO:\n" +
+                    "- Maria Paula Dallari Bucci (Direito e Políticas Públicas; arranjos institucionais e capacidades estatais).\n" +
+                    "- Maria do Carmo Rebouças (Teoria crítica dos direitos humanos, direito antidiscriminatório e Observatório ODS 18).\n" +
+                    "- Ailton Krenak (Crítica ontológica à mercantilização do solo).\n\n" +
+                    "METODOLOGIA:\n" +
+                    "Pesquisa empírico-qualitativa documental (SEHAB, Cartório de Registro de Imóveis, MPBA) e entrevistas semiestruturadas com gestores municipais, defensores públicos e lideranças comunitárias locais.\n\n" +
+                    "DECLARAÇÃO DE INTEGRIDADE SOBRE IA:\n" +
+                    "Em conformidade com a Portaria CNPq nº 2.664/2026, declara-se que as ferramentas de inteligência artificial foram empregadas estritamente como suporte técnico-revisório, preservando-se a autoria intelectual originária da pesquisa.";
+        } else if (opcaoNum === 2) {
+            texto = "ANTEPROJETO DE PESQUISA (PPGES/UFSB - EDITAL PROPPG Nº 30/2026)\n" +
+                    "Linha 1: Estado, Instituições e Governança\n" +
+                    "Orientadora Pretendida: Profa. Dra. Maria do Carmo Rebouças da Cruz Ferreira dos Santos\n\n" +
+                    "TÍTULO PRELIMINAR:\n" +
+                    "Mediação Judicial de Conflitos Fundiários Urbanos e Controle de Convencionalidade: A Atuação da Comissão Regional de Soluções Fundiárias do TJBA no Extremo Sul da Bahia\n\n" +
+                    "PROBLEMA DE PESQUISA:\n" +
+                    "Como a Comissão Regional de Soluções Fundiárias do TJBA (Resolução CNJ nº 510/2023 e Decreto Judiciário nº 367/2024) tem articulado os parâmetros internacionais de direitos humanos sobre a proibição de despejos forçados arbitrários nas visitas técnicas e processos de mediação de ocupações coletivas urbanas nas comarcas de Porto Seguro e Eunápolis?\n\n" +
+                    "HIPÓTESE DE TRABALHO:\n" +
+                    "Embora as 'Caravanas Regionais' do TJBA promovam mediação qualificada que evita reintegrações violentas imediatas, o sistema de justiça local enfrenta barreiras para efetivar soluções habitacionais perenes, decorrentes da carência de áreas públicas reservadas para habitação de interesse social nos municípios da região.\n\n" +
+                    "OBJETO EMPÍRICO E RECORTE:\n" +
+                    "Relatórios técnicos e atas de mediação da Comissão Regional de Soluções Fundiárias (CRSF/TJBA) nas comarcas polo, com ênfase nas visitas à área central de Trancoso (agosto/2026) e ao assentamento Baixa Verde em Eunápolis; atuação da DPE/BA e CEAMA/MPBA.\n\n" +
+                    "MARCO TEÓRICO:\n" +
+                    "- Maria do Carmo Rebouças (Controle de convencionalidade, SIDH/OEA e Usos Emancipatórios do Direito).\n" +
+                    "- Maria Paula Dallari Bucci (O Judiciário como ator de arranjos institucionais).\n" +
+                    "- Roberto Rabbani (Posse coletiva para moradia frente ao direito formal de propriedade).\n\n" +
+                    "METODOLOGIA:\n" +
+                    "Estudo de caso múltiplo comparativo (Trancoso vs. Baixa Verde/Eunápolis). Análise documental no PJe do TJBA e relatórios da CRSF; confronto com precedentes da Corte IDH e Comitê DESC; entrevistas com magistrados e defensores públicos.\n\n" +
+                    "DECLARAÇÃO DE INTEGRIDADE SOBRE IA:\n" +
+                    "Em conformidade com a Portaria CNPq nº 2.664/2026, declara-se que as ferramentas de inteligência artificial foram empregadas estritamente como suporte técnico-revisório, preservando-se a autoria intelectual originária da pesquisa.";
+        } else if (opcaoNum === 3) {
+            texto = "ANTEPROJETO DE PESQUISA (PPGES/UFSB - EDITAL PROPPG Nº 30/2026)\n" +
+                    "Linha 1: Estado, Instituições e Governança\n" +
+                    "Orientadora Pretendida: Profa. Dra. Maria do Carmo Rebouças da Cruz Ferreira dos Santos\n\n" +
+                    "TÍTULO PRELIMINAR:\n" +
+                    "A Dupla Face da Regularização Fundiária na Costa do Descobrimento: Assimetrias Institucionais entre a REURB-Específica e a REURB-Social sob a Perspectiva do Direito Antidiscriminatório\n\n" +
+                    "PROBLEMA DE PESQUISA:\n" +
+                    "De que forma a aplicação concomitante da REURB-E (voltada a ocupações de média e alta renda e empreendimentos turísticos) e da REURB-S (voltada a populações vulneráveis) pela gestão municipal de Porto Seguro expressa uma distribuição assimétrica de recursos institucionais, favorecendo a gentrificação dos distritos costeiros de Trancoso e Arraial d'Ajuda?\n\n" +
+                    "HIPÓTESE DE TRABALHO:\n" +
+                    "A celeridade dos procedimentos de REURB-E — impulsionada pelo mercado imobiliário turístico — contrasta com a morosidade e precariedade técnica da REURB-S nas áreas periféricas e nas comunidades tradicionais costeiras, consolidando um padrão de 'justiça urbanística de duas velocidades' incompatível com o direito antidiscriminatório e com a função social da posse.\n\n" +
+                    "OBJETO EMPÍRICO E RECORTE:\n" +
+                    "Decretos de instauração e certidões de REURB no Diário Oficial de Porto Seguro (2020–2026), confrontando a tramitação em Trancoso/Arraial d'Ajuda com o Complexo Baianão; ACPs e representações do MPBA e DPE/BA sobre empresas privadas de regularização.\n\n" +
+                    "MARCO TEÓRICO:\n" +
+                    "- Maria do Carmo Rebouças (Estudos Críticos do Constitucionalismo e do Desenvolvimento; racismo institucional).\n" +
+                    "- Maria Paula Dallari Bucci (Arranjos regulatórios urbanos e risco de captura corporativa).\n" +
+                    "- Ailton Krenak (Expropriação predatória pela economia turística).\n\n" +
+                    "METODOLOGIA:\n" +
+                    "Mapeamento quanti-qualitativo de prazos de tramitação via Diário Oficial de Porto Seguro; análise da matriz contratual de empresas privadas credenciadas; exame de inquéritos civis do MPBA; e entrevistas com membros do CONCIDADE e moradores tradicionais.\n\n" +
+                    "DECLARAÇÃO DE INTEGRIDADE SOBRE IA:\n" +
+                    "Em conformidade com a Portaria CNPq nº 2.664/2026, declara-se que as ferramentas de inteligência artificial foram empregadas estritamente como suporte técnico-revisório, preservando-se a autoria intelectual originária da pesquisa.";
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(texto).then(function() {
+                const btn = document.getElementById('btn-copiar-' + opcaoNum);
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Dossiê copiado com sucesso!';
+                    btn.style.background = '#2D5A43';
+                    btn.style.borderColor = '#2D5A43';
+                    setTimeout(function() {
+                        btn.innerHTML = originalHtml;
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                    }, 3000);
+                }
+            });
         }
     }
 
